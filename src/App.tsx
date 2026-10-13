@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -9,8 +9,10 @@ import { TaskCommandCenter } from './components/tasks/TaskCommandCenter';
 import { DynamicWorkspace } from './components/workspace/DynamicWorkspace';
 import { SmartScheduler } from './components/scheduler/SmartScheduler';
 import { AnalyticsDashboard } from './components/analytics/AnalyticsDashboard';
+import { WelcomePage } from './components/auth/WelcomePage';
 
 export const App: React.FC = () => {
+  const [hasEnteredDemo, setHasEnteredDemo] = useState(false);
   const {
     activeWindow,
     setActiveWindow,
@@ -20,8 +22,9 @@ export const App: React.FC = () => {
     setRolloverModalOpen,
   } = useAppStore();
 
-  // Check on boot if there are overdue tasks to prompt
+  // Keep the demo sign-in screen free of app alerts.
   useEffect(() => {
+    if (!hasEnteredDemo) return;
     const overdue = checkAndPromptOverdueTasks();
     if (overdue.length > 0) {
       // Delay slightly for smooth page load
@@ -30,10 +33,11 @@ export const App: React.FC = () => {
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [checkAndPromptOverdueTasks, hasEnteredDemo, setRolloverModalOpen]);
 
   // Global keyboard shortcuts
   useEffect(() => {
+    if (!hasEnteredDemo) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       // If user is typing in an input or textarea, don't trigger global shortcuts
       if (
@@ -61,12 +65,16 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setActiveWindow, setQuickTaskModalOpen]);
+  }, [hasEnteredDemo, setActiveWindow, setQuickTaskModalOpen]);
+
+  if (!hasEnteredDemo) {
+    return <WelcomePage onEnterDemo={() => setHasEnteredDemo(true)} />;
+  }
 
   return (
-    <div className="flex min-h-screen bg-dark-950 text-slate-100 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="app-shell flex min-h-screen bg-dark-950 font-sans text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
       {/* Sidebar Navigation */}
-      <Sidebar />
+      <Sidebar onExitDemo={() => setHasEnteredDemo(false)} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-y-auto">

@@ -11,22 +11,23 @@
     background-color: #07090e;
     color: #e2e8f0;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Custom subtle scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
   }
   ::-webkit-scrollbar-track {
-    background: #0b0f19;
+    background: #101118;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1e2945;
+    background: #343543;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #2b395d;
+    background: #4b4c5e;
   }
 }
 
@@ -51,3 +52,99 @@
   }
 }
 
+.welcome-page {
+  background:
+    radial-gradient(ellipse at 16% 12%, rgba(90, 77, 190, 0.16), transparent 34%),
+    radial-gradient(ellipse at 88% 86%, rgba(46, 113, 129, 0.12), transparent 36%),
+    #101118;
+}
+
+.welcome-gradient-text {
+  background: linear-gradient(100deg, #c6baff 8%, #8a9afc 52%, #85d7ca 105%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcome-preview-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+}
+
+.welcome-form-card {
+  background: linear-gradient(155deg, rgba(29, 30, 43, 0.98), rgba(20, 21, 30, 0.99));
+}
+
+.welcome-input {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.09);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.app-shell {
+  background: #0d0e14;
+}
+
+.app-sidebar,
+.app-header {
+  background-color: #101118;
+}
+
+.app-header {
+  backdrop-filter: blur(14px);
+  background-color: rgba(16, 17, 24, 0.92);
+}
+
+.app-search {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 640px) {
+  .app-sidebar {
+    width: 4rem;
+    align-items: center;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+
+  .sidebar-label {
+    display: none;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding-right: 0.65rem;
+    padding-left: 0.65rem;
+  }
+
+  .app-sidebar > div:first-child {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .app-sidebar nav {
+    width: 100%;
+  }
+
+  .app-sidebar nav > p {
+    display: none;
+  }
+
+  .app-sidebar nav > .relative > div {
+    padding-left: 0;
+  }
+
+  .app-shell > div > main {
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
