@@ -1,4 +1,4 @@
-import { Task, TimeBlock, DailyReview, DailyMetric } from '../types';
+import { Task, TimeBlock, DailyMetric } from '../types';
 import { getTodayDateString } from '../utils/dateUtils';
 
 const today = getTodayDateString();
@@ -280,18 +280,6 @@ export const SEED_BLOCKS: TimeBlock[] = [
   },
 ];
 
-export const SEED_REVIEWS: DailyReview[] = [
-  {
-    id: 'rev-yesterday',
-    date: '2026-09-21',
-    rating: 5,
-    wins: 'Finished the Distributed Systems midterm prep and completed 4 high-priority PRs without context switching.',
-    blockers: 'Wi-Fi disconnect in the afternoon cost 15 minutes, but offline notes worked flawlessly.',
-    notes: 'Keep morning focus blocks uninterrupted. Avoid opening social media before 12:00.',
-    createdAt: '2026-09-21T21:45:00',
-  },
-];
-
 export const SEED_METRICS: DailyMetric[] = [
   {
     date: '2026-09-19',
@@ -324,4 +312,3 @@ export const SEED_METRICS: DailyMetric[] = [
     categoryBreakdown: { Academic: 135, 'Dev Project': 120, Personal: 30 },
   },
 ];
-

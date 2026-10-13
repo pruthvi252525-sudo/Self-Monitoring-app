@@ -47,8 +47,8 @@ export const Header: React.FC = () => {
       icon: Calendar,
     },
     analytics: {
-      title: 'Performance & Accountability',
-      subtitle: 'Dynamic velocity, weighted score, and reflection history',
+      title: 'Productivity Analytics',
+      subtitle: 'Task velocity, completion score, and focus history',
       icon: BarChart3,
     },
   }[activeWindow];
@@ -159,4 +159,3 @@ export const Header: React.FC = () => {
     </header>
   );
 };
-

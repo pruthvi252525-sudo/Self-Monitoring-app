@@ -3,7 +3,6 @@ import { useAppStore } from './store/useAppStore';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { TaskModal } from './components/tasks/TaskModal';
-import { DailyReviewModal } from './components/analytics/DailyReviewModal';
 import { OverdueRolloverModal } from './components/layout/OverdueRolloverModal';
 import { ExportModal } from './components/layout/ExportModal';
 import { TaskCommandCenter } from './components/tasks/TaskCommandCenter';
@@ -86,7 +85,6 @@ export const App: React.FC = () => {
         isOpen={quickTaskModalOpen}
         onClose={() => setQuickTaskModalOpen(false)}
       />
-      <DailyReviewModal />
       <OverdueRolloverModal />
       <ExportModal />
     </div>
