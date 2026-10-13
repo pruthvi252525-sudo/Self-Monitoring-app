@@ -1,18 +1,17 @@
 import React from 'react';
 import {
+  AlertCircle,
+  BarChart3,
+  CalendarDays,
   CheckSquare,
   Cpu,
-  Calendar,
-  BarChart3,
-  Search,
-  Play,
   Pause,
+  Play,
   RotateCcw,
-  AlertTriangle,
+  Search,
   Timer,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { minutesToTime } from '../../utils/dateUtils';
 
 export const Header: React.FC = () => {
   const {
@@ -29,130 +28,99 @@ export const Header: React.FC = () => {
   } = useAppStore();
 
   const overdueTasks = checkAndPromptOverdueTasks();
-
   const windowInfo = {
-    tasks: {
-      title: 'Task Command Center',
-      subtitle: 'Organize coursework, dev projects, and priorities',
-      icon: CheckSquare,
-    },
-    workspace: {
-      title: 'Dynamic Workspace',
-      subtitle: 'Context hub, markdown documentation & research assets',
-      icon: Cpu,
-    },
-    scheduler: {
-      title: 'Smart Daily Scheduler',
-      subtitle: 'Algorithmic time-blocking and focus sessions (08:00 - 22:00)',
-      icon: Calendar,
-    },
-    analytics: {
-      title: 'Productivity Analytics',
-      subtitle: 'Task velocity, completion score, and focus history',
-      icon: BarChart3,
-    },
+    tasks: { title: 'My tasks', icon: CheckSquare },
+    workspace: { title: 'Workspace', icon: Cpu },
+    scheduler: { title: 'Focus & plan', icon: CalendarDays },
+    analytics: { title: 'Your progress', icon: BarChart3 },
   }[activeWindow];
-
   const Icon = windowInfo.icon;
-
-  const pomodoroMinutes = Math.floor(pomodoro.timeLeft / 60);
-  const pomodoroSeconds = pomodoro.timeLeft % 60;
-  const formattedPomodoro = `${String(pomodoroMinutes).padStart(2, '0')}:${String(
-    pomodoroSeconds
-  ).padStart(2, '0')}`;
+  const formattedPomodoro = `${String(Math.floor(pomodoro.timeLeft / 60)).padStart(
+    2,
+    '0'
+  )}:${String(pomodoro.timeLeft % 60).padStart(2, '0')}`;
 
   return (
-    <header className="h-16 bg-dark-900/80 backdrop-blur-md border-b border-slate-800/80 px-6 flex items-center justify-between sticky top-0 z-10">
-      {/* Left: Window Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-dark-800 text-indigo-400 border border-slate-700/50">
-          <Icon className="w-5 h-5" />
-        </div>
-        <div>
-          <h2 className="text-base font-bold text-slate-100 leading-tight">
+    <header className="app-header sticky top-0 z-10 flex min-h-[76px] items-center justify-between gap-4 border-b border-white/[0.07] px-5 sm:px-8">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.055] text-indigo-200">
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold text-slate-100 sm:text-base">
             {windowInfo.title}
           </h2>
-          <p className="text-xs text-slate-400 hidden sm:block">
-            {windowInfo.subtitle}
+          <p className="hidden text-xs text-slate-500 sm:block">
+            {new Intl.DateTimeFormat('en', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            }).format(new Date())}
           </p>
         </div>
       </div>
 
-      {/* Center / Right: Global Search & Live Pomodoro Widget */}
-      <div className="flex items-center gap-4">
-        {/* Search Bar */}
-        <div className="relative w-48 md:w-64">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search tasks, tags, notes..."
-            value={taskFilter.search}
-            onChange={(e) => setTaskFilter({ search: e.target.value })}
-            className="w-full bg-dark-800/80 border border-slate-700/60 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-          />
-        </div>
-
-        {/* Header Pomodoro Quick Pill */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-dark-850 border border-slate-700/60 shadow-inner">
-          <button
-            onClick={() => setActiveWindow('scheduler')}
-            className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-200 hover:text-indigo-300"
-            title="Open Focus Scheduler"
-          >
-            <Timer
-              className={`w-3.5 h-3.5 ${
-                pomodoro.isRunning ? 'text-red-400 animate-spin' : 'text-slate-400'
-              }`}
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {activeWindow === 'tasks' && (
+          <label className="relative hidden md:block">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              aria-label="Search tasks"
+              className="app-search w-52 rounded-xl border py-2 pl-9 pr-3 text-xs text-slate-200 placeholder:text-slate-500 focus:border-indigo-400/50 focus:outline-none"
+              onChange={(event) => setTaskFilter({ search: event.target.value })}
+              placeholder="Find a task"
+              value={taskFilter.search}
             />
-            <span
-              className={
-                pomodoro.isRunning ? 'text-red-400 font-extrabold' : 'text-slate-300'
-              }
-            >
-              {formattedPomodoro}
-            </span>
-          </button>
+          </label>
+        )}
 
-          <div className="flex items-center gap-1 border-l border-slate-700 pl-2">
+        <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-2 py-1.5">
+          <button
+            aria-label="Open focus timer"
+            className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs font-medium text-slate-300 transition hover:text-white"
+            onClick={() => setActiveWindow('scheduler')}
+            title="Open focus timer"
+            type="button"
+          >
+            <Timer className={`h-4 w-4 ${pomodoro.isRunning ? 'text-indigo-300' : 'text-slate-500'}`} />
+            <span className="font-mono tabular-nums">{formattedPomodoro}</span>
+          </button>
+          <span className="h-4 w-px bg-white/[0.09]" />
+          <button
+            aria-label={pomodoro.isRunning ? 'Pause focus timer' : 'Start focus timer'}
+            className="rounded-lg p-1 text-slate-400 transition hover:bg-white/[0.07] hover:text-white"
+            onClick={pomodoro.isRunning ? pausePomodoro : startPomodoro}
+            title={pomodoro.isRunning ? 'Pause focus timer' : 'Start focus timer'}
+            type="button"
+          >
             {pomodoro.isRunning ? (
-              <button
-                onClick={pausePomodoro}
-                className="p-1 rounded text-amber-400 hover:bg-slate-700/50"
-                title="Pause Focus Session"
-              >
-                <Pause className="w-3 h-3" />
-              </button>
+              <Pause className="h-3.5 w-3.5" />
             ) : (
-              <button
-                onClick={startPomodoro}
-                className="p-1 rounded text-emerald-400 hover:bg-slate-700/50"
-                title="Start Focus Session"
-              >
-                <Play className="w-3 h-3 fill-current" />
-              </button>
+              <Play className="h-3.5 w-3.5 fill-current" />
             )}
-            <button
-              onClick={resetPomodoro}
-              className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
-              title="Reset Timer"
-            >
-              <RotateCcw className="w-3 h-3" />
-            </button>
-          </div>
+          </button>
+          <button
+            aria-label="Reset focus timer"
+            className="hidden rounded-lg p-1 text-slate-500 transition hover:bg-white/[0.07] hover:text-white sm:block"
+            onClick={resetPomodoro}
+            title="Reset focus timer"
+            type="button"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
         </div>
 
-        {/* Overdue Tasks Alert Badge */}
         {overdueTasks.length > 0 && (
           <button
+            aria-label={`${overdueTasks.length} overdue tasks`}
+            className="flex items-center gap-1.5 rounded-xl border border-rose-300/15 bg-rose-300/[0.07] px-2.5 py-2 text-xs font-medium text-rose-200 transition hover:bg-rose-300/[0.12]"
             onClick={() => setRolloverModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold animate-pulse transition-colors"
             title={`${overdueTasks.length} task(s) past deadline or need rollover`}
+            type="button"
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Overdue</span>
-            <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-mono">
-              {overdueTasks.length}
-            </span>
+            <AlertCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">{overdueTasks.length} overdue</span>
+            <span className="sm:hidden">{overdueTasks.length}</span>
           </button>
         )}
       </div>

@@ -1,13 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { TaskCategory, TaskPriority } from '../../types';
-import {
-  List,
-  Grid2X2,
-  Kanban,
-  X,
-  Filter,
-} from 'lucide-react';
 
 export const TaskFilterBar: React.FC = () => {
   const {
@@ -16,141 +10,140 @@ export const TaskFilterBar: React.FC = () => {
     resetTaskFilter,
     taskViewMode,
     setTaskViewMode,
-    tasks,
   } = useAppStore();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const categories: (TaskCategory | 'all')[] = ['all', 'Academic', 'Dev Project', 'Personal'];
-  const priorities: (TaskPriority | 'all')[] = ['all', 'P1', 'P2', 'P3', 'P4'];
-  const statuses: ('all' | 'active' | 'completed')[] = ['all', 'active', 'completed'];
-
-  const hasActiveFilters =
-    taskFilter.search !== '' ||
-    taskFilter.category !== 'all' ||
-    taskFilter.priority !== 'all' ||
-    taskFilter.status !== 'all';
+  const hasAdvancedFilters =
+    taskFilter.category !== 'all' || taskFilter.priority !== 'all';
+  const hasActiveFilters = hasAdvancedFilters || taskFilter.status !== 'all';
+  const statuses: { value: 'all' | 'active' | 'completed'; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'active', label: 'Open' },
+    { value: 'completed', label: 'Completed' },
+  ];
 
   return (
-    <div className="bg-dark-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      {/* Top Row: View Switcher & Quick Metrics */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        {/* View Mode Toggle Buttons */}
-        <div className="flex items-center p-1 bg-dark-850 rounded-xl border border-slate-800">
-          <button
-            onClick={() => setTaskViewMode('table')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              taskViewMode === 'table'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-dark-800'
-            }`}
-          >
-            <List className="w-3.5 h-3.5" />
-            <span>Table List</span>
-          </button>
-
-          <button
-            onClick={() => setTaskViewMode('eisenhower')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              taskViewMode === 'eisenhower'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-dark-800'
-            }`}
-          >
-            <Grid2X2 className="w-3.5 h-3.5" />
-            <span>Eisenhower Matrix</span>
-          </button>
-
-          <button
-            onClick={() => setTaskViewMode('kanban')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              taskViewMode === 'kanban'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-dark-800'
-            }`}
-          >
-            <Kanban className="w-3.5 h-3.5" />
-            <span>Kanban Board</span>
-          </button>
-        </div>
-
-        {/* Status Tab Filter */}
-        <div className="flex items-center gap-1.5 text-xs">
-          {statuses.map((s) => (
+    <section className="overflow-hidden rounded-2xl border border-slate-800/80 bg-dark-900">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:px-4">
+        <div className="flex items-center gap-1 rounded-xl bg-dark-850 p-1">
+          {statuses.map((status) => (
             <button
-              key={s}
-              onClick={() => setTaskFilter({ status: s })}
-              className={`px-3 py-1.5 rounded-xl capitalize font-medium transition-colors ${
-                taskFilter.status === s
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-dark-800'
+              aria-pressed={taskFilter.status === status.value}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                taskFilter.status === status.value
+                  ? 'bg-dark-700 text-slate-100'
+                  : 'text-slate-500 hover:text-slate-200'
               }`}
+              key={status.value}
+              onClick={() => setTaskFilter({ status: status.value })}
+              type="button"
             >
-              {s}
+              {status.label}
             </button>
           ))}
+        </div>
 
+        <div className="flex items-center gap-2">
+          <label className="relative">
+            <span className="sr-only">Task view</span>
+            <select
+              className="app-search appearance-none rounded-xl border py-2 pl-3 pr-8 text-xs font-medium text-slate-300 focus:border-indigo-400/50 focus:outline-none"
+              onChange={(event) =>
+                setTaskViewMode(event.target.value as 'table' | 'eisenhower' | 'kanban')
+              }
+              value={taskViewMode}
+            >
+              <option value="table">List view</option>
+              <option value="kanban">Board view</option>
+              <option value="eisenhower">Priority view</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+          </label>
+
+          <button
+            aria-expanded={filtersOpen}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition ${
+              filtersOpen || hasAdvancedFilters
+                ? 'border-indigo-400/20 bg-indigo-400/[0.08] text-indigo-200'
+                : 'border-white/[0.07] text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+            }`}
+            onClick={() => setFiltersOpen((open) => !open)}
+            type="button"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Filters
+            {hasAdvancedFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-300" />}
+          </button>
           {hasActiveFilters && (
             <button
+              aria-label="Clear filters"
+              className="rounded-lg p-2 text-slate-500 transition hover:bg-white/[0.05] hover:text-slate-200"
               onClick={resetTaskFilter}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-medium border border-red-500/20 ml-2"
+              title="Clear filters"
+              type="button"
             >
-              <X className="w-3 h-3" />
-              <span>Reset</span>
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Bottom Row: Category and Priority Filter Chips */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-800/60">
-        {/* Category Filter Chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
-            <Filter className="w-3 h-3 text-slate-400" />
-            Category:
-          </span>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setTaskFilter({ category: cat })}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                taskFilter.category === cat
-                  ? 'bg-purple-600/25 text-purple-300 border border-purple-500/40'
-                  : 'bg-dark-800 text-slate-400 hover:text-slate-200 border border-transparent'
-              }`}
-            >
-              {cat === 'all' ? 'All Categories' : cat}
-            </button>
-          ))}
+      {filtersOpen && (
+        <div className="flex flex-wrap gap-4 border-t border-slate-800/70 px-4 py-3">
+          <FilterSelect
+            label="Category"
+            onChange={(category) => setTaskFilter({ category })}
+            options={[
+              ['all', 'All categories'],
+              ['Academic', 'Academic'],
+              ['Dev Project', 'Dev project'],
+              ['Personal', 'Personal'],
+            ]}
+            value={taskFilter.category}
+          />
+          <FilterSelect
+            label="Priority"
+            onChange={(priority) => setTaskFilter({ priority })}
+            options={[
+              ['all', 'All priorities'],
+              ['P1', 'P1 · Urgent'],
+              ['P2', 'P2 · High'],
+              ['P3', 'P3 · Normal'],
+              ['P4', 'P4 · Low'],
+            ]}
+            value={taskFilter.priority}
+          />
         </div>
-
-        {/* Priority Filter Chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mr-1">
-            Priority:
-          </span>
-          {priorities.map((p) => {
-            const active = taskFilter.priority === p;
-            const colors = {
-              all: active ? 'bg-slate-700 text-white' : 'bg-dark-800 text-slate-400',
-              P1: active ? 'bg-red-500/30 text-red-300 border-red-500/50' : 'bg-dark-800 text-slate-400 hover:text-red-400',
-              P2: active ? 'bg-amber-500/30 text-amber-300 border-amber-500/50' : 'bg-dark-800 text-slate-400 hover:text-amber-400',
-              P3: active ? 'bg-blue-500/30 text-blue-300 border-blue-500/50' : 'bg-dark-800 text-slate-400 hover:text-blue-400',
-              P4: active ? 'bg-slate-500/30 text-slate-300 border-slate-500/50' : 'bg-dark-800 text-slate-400 hover:text-slate-300',
-            }[p];
-
-            return (
-              <button
-                key={p}
-                onClick={() => setTaskFilter({ priority: p })}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium border border-transparent transition-all ${colors}`}
-              >
-                {p === 'all' ? 'All' : p}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+      )}
+    </section>
   );
 };
 
+interface FilterSelectProps<T extends string> {
+  label: string;
+  options: [T, string][];
+  value: T;
+  onChange: (value: T) => void;
+}
+
+const FilterSelect = <T extends TaskCategory | TaskPriority | 'all'>({
+  label,
+  options,
+  value,
+  onChange,
+}: FilterSelectProps<T>) => (
+  <label className="flex items-center gap-2 text-xs text-slate-500">
+    {label}
+    <select
+      className="app-search rounded-lg border px-2.5 py-1.5 text-xs text-slate-300 focus:border-indigo-400/50 focus:outline-none"
+      onChange={(event) => onChange(event.target.value as T)}
+      value={value}
+    >
+      {options.map(([optionValue, optionLabel]) => (
+        <option key={optionValue} value={optionValue}>
+          {optionLabel}
+        </option>
+      ))}
+    </select>
+  </label>
+);
