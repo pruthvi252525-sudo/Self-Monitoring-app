@@ -6,7 +6,6 @@ import {
   BarChart3,
   Plus,
   Zap,
-  Star,
   Download,
   Flame,
   Clock,
@@ -26,7 +25,6 @@ export const Sidebar: React.FC = () => {
     getProductivityScore,
     getStreakStats,
     setQuickTaskModalOpen,
-    setReviewModalOpen,
     setExportModalOpen,
     autoPlanMyDay,
     resetToSeedData,
@@ -69,7 +67,7 @@ export const Sidebar: React.FC = () => {
     {
       id: 'analytics',
       label: 'Performance Hub',
-      description: 'Velocity & Reviews',
+      description: 'Velocity & Focus',
       icon: BarChart3,
       badge: `${score}%`,
     },
@@ -216,16 +214,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Footer Utility Actions */}
-      <div className="p-3 border-t border-slate-800/80 grid grid-cols-3 gap-1 bg-dark-900/90">
-        <button
-          onClick={() => setReviewModalOpen(true)}
-          title="Daily Reflection / Review"
-          className="flex flex-col items-center justify-center p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-dark-800 transition-colors"
-        >
-          <Star className="w-4 h-4" />
-          <span className="text-[10px] mt-1">Review</span>
-        </button>
-
+      <div className="p-3 border-t border-slate-800/80 grid grid-cols-2 gap-1 bg-dark-900/90">
         <button
           onClick={() => setExportModalOpen(true)}
           title="Backup & Export"
@@ -247,4 +236,3 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
-

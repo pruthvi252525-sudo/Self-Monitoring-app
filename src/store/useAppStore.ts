@@ -12,11 +12,10 @@ import {
   TimeBlockStatus,
   PomodoroMode,
   PomodoroSession,
-  DailyReview,
   DailyMetric,
   AppWindow,
 } from '../types';
-import { SEED_TASKS, SEED_BLOCKS, SEED_REVIEWS, SEED_METRICS } from './seedData';
+import { SEED_TASKS, SEED_BLOCKS, SEED_METRICS } from './seedData';
 import { autoPlanDay, AutoPlanResult } from '../utils/autoPlanner';
 import { getTodayDateString, addMinutesToTime, timeToMinutes } from '../utils/dateUtils';
 import confetti from 'canvas-confetti';
@@ -36,8 +35,6 @@ interface AppState {
   setSelectedTaskId: (id: string | null) => void;
   quickTaskModalOpen: boolean;
   setQuickTaskModalOpen: (open: boolean) => void;
-  reviewModalOpen: boolean;
-  setReviewModalOpen: (open: boolean) => void;
   exportModalOpen: boolean;
   setExportModalOpen: (open: boolean) => void;
   rolloverModalOpen: boolean;
@@ -90,9 +87,7 @@ interface AppState {
   setPomodoroBlock: (blockId: string | null, taskId?: string | null) => void;
 
   // Window 4: Performance & Analytics
-  dailyReviews: DailyReview[];
   dailyMetrics: DailyMetric[];
-  submitDailyReview: (review: Omit<DailyReview, 'id' | 'createdAt'>) => void;
   getProductivityScore: () => number;
   getTaskVelocityStats: () => {
     completed: number;
@@ -115,7 +110,7 @@ interface AppState {
 
   // System & Backup
   resetToSeedData: () => void;
-  restoreFromBackup: (data: { tasks: Task[]; timeBlocks: TimeBlock[]; dailyReviews?: DailyReview[]; dailyMetrics?: DailyMetric[] }) => void;
+  restoreFromBackup: (data: { tasks: Task[]; timeBlocks: TimeBlock[]; dailyMetrics?: DailyMetric[] }) => void;
 }
 
 const DEFAULT_FILTER: TaskFilterState = {
@@ -141,8 +136,6 @@ export const useAppStore = create<AppState>()(
       setSelectedTaskId: (id) => set({ selectedTaskId: id }),
       quickTaskModalOpen: false,
       setQuickTaskModalOpen: (open) => set({ quickTaskModalOpen: open }),
-      reviewModalOpen: false,
-      setReviewModalOpen: (open) => set({ reviewModalOpen: open }),
       exportModalOpen: false,
       setExportModalOpen: (open) => set({ exportModalOpen: open }),
       rolloverModalOpen: false,
@@ -544,27 +537,8 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
-      // Analytics & Accountability
-      dailyReviews: SEED_REVIEWS,
+      // Analytics
       dailyMetrics: SEED_METRICS,
-
-      submitDailyReview: (reviewData) => {
-        const newReview: DailyReview = {
-          ...reviewData,
-          id: `rev-${Date.now()}`,
-          createdAt: new Date().toISOString(),
-        };
-        set((state) => ({
-          dailyReviews: [
-            newReview,
-            ...state.dailyReviews.filter((r) => r.date !== reviewData.date),
-          ],
-          reviewModalOpen: false,
-        }));
-        try {
-          confetti({ particleCount: 100, spread: 100 });
-        } catch {}
-      },
 
       getProductivityScore: () => {
         const { tasks } = get();
@@ -670,7 +644,6 @@ export const useAppStore = create<AppState>()(
         set({
           tasks: SEED_TASKS,
           timeBlocks: SEED_BLOCKS,
-          dailyReviews: SEED_REVIEWS,
           dailyMetrics: SEED_METRICS,
           selectedTaskId: 'task-1',
           activeWindow: 'tasks',
@@ -680,7 +653,6 @@ export const useAppStore = create<AppState>()(
       restoreFromBackup: (data) => {
         if (data.tasks) set({ tasks: data.tasks });
         if (data.timeBlocks) set({ timeBlocks: data.timeBlocks });
-        if (data.dailyReviews) set({ dailyReviews: data.dailyReviews });
         if (data.dailyMetrics) set({ dailyMetrics: data.dailyMetrics });
       },
     }),
@@ -690,4 +662,3 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
-

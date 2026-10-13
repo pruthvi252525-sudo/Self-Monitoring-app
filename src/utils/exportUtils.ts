@@ -1,4 +1,4 @@
-import { Task, TimeBlock, DailyReview, DailyMetric } from '../types';
+import { Task, TimeBlock, DailyMetric } from '../types';
 
 export const downloadFile = (content: string, filename: string, mimeType: string) => {
   const blob = new Blob([content], { type: mimeType });
@@ -16,7 +16,6 @@ export const exportAppStateAsJson = (data: {
   tasks: Task[];
   timeBlocks: TimeBlock[];
   dailyMetrics: DailyMetric[];
-  dailyReviews: DailyReview[];
   exportedAt: string;
 }) => {
   const jsonString = JSON.stringify(data, null, 2);
@@ -69,20 +68,18 @@ export const exportTaskWorkspaceAsMarkdown = (task: Task) => {
 export const exportDailySummaryAsMarkdown = (
   date: string,
   tasks: Task[],
-  blocks: TimeBlock[],
-  review?: DailyReview
+  blocks: TimeBlock[]
 ) => {
   const completedTasks = tasks.filter((t) => t.status === 'completed');
   const pendingTasks = tasks.filter((t) => t.status !== 'completed');
 
   const lines: string[] = [
-    `# Daily Productivity & Accountability Report - ${date}`,
+    `# Daily Productivity Report - ${date}`,
     ``,
     `## Summary Statistics`,
     `- **Tasks Completed:** ${completedTasks.length}`,
     `- **Pending Tasks:** ${pendingTasks.length}`,
     `- **Scheduled Time Blocks:** ${blocks.length}`,
-    review ? `- **Day Rating:** ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)} (${review.rating}/5)` : '',
     ``,
     `## Completed Tasks`,
   ];
@@ -113,17 +110,6 @@ export const exportDailySummaryAsMarkdown = (
     lines.push(`_No time blocks scheduled._`);
   }
 
-  if (review) {
-    lines.push(``, `## Daily Reflection`);
-    lines.push(`### Wins of the Day`);
-    lines.push(review.wins || '_None specified_');
-    lines.push(``, `### Blockers Encountered`);
-    lines.push(review.blockers || '_None specified_');
-    lines.push(``, `### Key Takeaways / Notes`);
-    lines.push(review.notes || '_None specified_');
-  }
-
   const md = lines.join('\n');
   downloadFile(md, `daily-summary-${date}.md`, 'text/markdown');
 };
-

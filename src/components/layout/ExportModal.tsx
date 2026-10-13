@@ -16,7 +16,6 @@ export const ExportModal: React.FC = () => {
     tasks,
     timeBlocks,
     dailyMetrics,
-    dailyReviews,
     selectedTaskId,
     restoreFromBackup,
   } = useAppStore();
@@ -26,14 +25,12 @@ export const ExportModal: React.FC = () => {
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) || tasks[0];
   const today = getTodayDateString();
-  const todayReview = dailyReviews.find((r) => r.date === today);
 
   const handleExportJson = () => {
     exportAppStateAsJson({
       tasks,
       timeBlocks,
       dailyMetrics,
-      dailyReviews,
       exportedAt: new Date().toISOString(),
     });
   };
@@ -45,7 +42,7 @@ export const ExportModal: React.FC = () => {
 
   const handleExportDayMarkdown = () => {
     const todayBlocks = timeBlocks.filter((b) => b.date === today);
-    exportDailySummaryAsMarkdown(today, tasks, todayBlocks, todayReview);
+    exportDailySummaryAsMarkdown(today, tasks, todayBlocks);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +86,7 @@ export const ExportModal: React.FC = () => {
             <span>Complete Database Backup (JSON)</span>
           </h4>
           <p className="text-xs text-slate-400">
-            Save all tasks, notes, time blocks, Pomodoro logs, and daily reviews into a single JSON file.
+            Save your tasks, notes, time blocks, and focus metrics in one JSON file.
           </p>
           <div className="flex items-center gap-3 pt-1">
             <button
@@ -156,10 +153,10 @@ export const ExportModal: React.FC = () => {
             <div className="flex items-center justify-between p-3 rounded-lg bg-dark-800 border border-slate-700/50">
               <div className="min-w-0 pr-3">
                 <div className="text-xs font-semibold text-slate-200 truncate">
-                  Daily Productivity & Accountability Report
+                  Daily Productivity Report
                 </div>
                 <div className="text-[11px] text-slate-400">
-                  Today ({today}) schedule, completed tasks, and review reflection
+                  Today ({today}) schedule and task progress
                 </div>
               </div>
               <button
@@ -176,4 +173,3 @@ export const ExportModal: React.FC = () => {
     </Modal>
   );
 };
-
