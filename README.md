@@ -1,6 +1,9 @@
 # Self-Monitoring App
 
 A personal productivity app for managing tasks, planning your day, and tracking focus.
+to test login credentials 
+Email: demo@example.com
+pass: DemoPreview123!
 
 ## Run locally
 
