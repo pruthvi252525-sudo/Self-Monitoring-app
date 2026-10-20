@@ -657,6 +657,7 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
+      // Keep app data in this browser; this is not server-side database storage.
       name: 'self_monitoring_app_storage_v1',
       storage: createJSONStorage(() => localStorage),
     }

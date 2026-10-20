@@ -30,6 +30,10 @@ Open the local URL printed by Vite. To create a production build, run:
 npm run build
 ```
 
+## Understand and change the code
+
+Start with the [beginner-friendly development guide](./DEVELOPMENT_GUIDE.md). It explains how the app starts, how a UI action changes and saves data, where each feature lives, and how to make common changes.
+
 ## Project layout
 
 ```text
