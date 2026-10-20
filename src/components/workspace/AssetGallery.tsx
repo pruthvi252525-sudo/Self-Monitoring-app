@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { WorkspaceAsset } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { getDownloadURL, ref as storageRef, uploadBytes, deleteObject } from 'firebase/storage';
+import { auth, getFirebaseErrorMessage, storage } from '../../lib/firebase';
 import {
   Image as ImageIcon,
   Plus,
@@ -24,23 +26,63 @@ export const AssetGallery: React.FC<AssetGalleryProps> = ({ taskId, assets }) =>
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlName, setUrlName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [assetError, setAssetError] = useState('');
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      const sizeKb = Math.round(file.size / 1024);
+    e.target.value = '';
+    setAssetError('');
+    if (!file.type.startsWith('image/')) {
+      setAssetError('Choose an image file to upload.');
+      return;
+    }
+    if (file.size >= 10 * 1024 * 1024) {
+      setAssetError('Images must be smaller than 10 MB.');
+      return;
+    }
+    const currentUser = auth?.currentUser;
+    if (!currentUser || !storage) {
+      setAssetError('Sign in and configure Firebase Storage before uploading images.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const assetId = `asset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const safeName = file.name.replace(/[^\w.-]/g, '_');
+      const imageRef = storageRef(
+        storage,
+        `users/${currentUser.uid}/assets/${assetId}/${safeName}`
+      );
+      await uploadBytes(imageRef, file, { contentType: file.type });
+      const downloadUrl = await getDownloadURL(imageRef);
       addAsset(taskId, {
         name: file.name,
-        url: result,
-        type: file.type.includes('image') ? 'image' : 'diagram',
-        size: `${sizeKb} KB`,
+        url: downloadUrl,
+        type: 'image',
+        size: `${Math.round(file.size / 1024)} KB`,
       });
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      setAssetError(getFirebaseErrorMessage(error));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteAsset = async (asset: WorkspaceAsset) => {
+    setAssetError('');
+    try {
+      if (asset.url.includes('firebasestorage.googleapis.com')) {
+        if (!storage) throw new Error('Firebase Storage is not configured.');
+        await deleteObject(storageRef(storage, asset.url));
+      }
+      deleteAsset(taskId, asset.id);
+    } catch (error) {
+      setAssetError(getFirebaseErrorMessage(error));
+    }
   };
 
   const handleAddUrl = (e: React.FormEvent) => {
@@ -83,11 +125,12 @@ export const AssetGallery: React.FC<AssetGalleryProps> = ({ taskId, assets }) =>
           </button>
 
           <button
+            disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-medium"
+            className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-medium disabled:cursor-wait disabled:opacity-50"
           >
             <Upload className="w-3.5 h-3.5" />
-            <span>Upload</span>
+            <span>{uploading ? 'Uploading…' : 'Upload'}</span>
           </button>
           <input
             ref={fileInputRef}
@@ -98,6 +141,12 @@ export const AssetGallery: React.FC<AssetGalleryProps> = ({ taskId, assets }) =>
           />
         </div>
       </div>
+
+      {assetError && (
+        <p aria-live="polite" className="rounded-lg border border-amber-300/15 bg-amber-300/[0.06] px-3 py-2 text-xs text-amber-100/80" role="alert">
+          {assetError}
+        </p>
+      )}
 
       {/* Add URL form */}
       {showUrlInput && (
@@ -170,7 +219,7 @@ export const AssetGallery: React.FC<AssetGalleryProps> = ({ taskId, assets }) =>
                   <Eye className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => deleteAsset(taskId, asset.id)}
+                  onClick={() => void handleDeleteAsset(asset)}
                   className="p-1 rounded bg-black/60 hover:bg-red-600/80 text-white"
                   title="Remove Asset"
                 >
@@ -218,4 +267,3 @@ export const AssetGallery: React.FC<AssetGalleryProps> = ({ taskId, assets }) =>
     </div>
   );
 };
-

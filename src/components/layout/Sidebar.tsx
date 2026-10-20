@@ -14,10 +14,11 @@ import { useAppStore } from '../../store/useAppStore';
 import { AppWindow } from '../../types';
 
 interface SidebarProps {
-  onExitDemo: () => void;
+  onSignOut: () => void;
+  userName: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onExitDemo }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
   const {
     activeWindow,
     setActiveWindow,
@@ -136,10 +137,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onExitDemo }) => {
         <div className="sidebar-label rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3.5">
           <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Demo account
+            Signed in
           </div>
-          <p className="mt-1.5 pl-3.5 text-[11px] leading-4 text-slate-500">
-            Your work stays in this browser.
+          <p className="mt-1.5 truncate pl-3.5 text-[11px] leading-4 text-slate-500" title={userName}>
+            {userName}
           </p>
         </div>
 
@@ -155,12 +156,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onExitDemo }) => {
           </button>
           <button
             className="sidebar-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-slate-500 transition hover:bg-white/[0.045] hover:text-slate-200"
-            onClick={onExitDemo}
-            title="Exit demo"
+            onClick={onSignOut}
+            title="Sign out"
             type="button"
           >
             <LogOut className="h-4 w-4 shrink-0" />
-            <span className="sidebar-label">Exit demo</span>
+            <span className="sidebar-label">Sign out</span>
           </button>
         </div>
       </div>

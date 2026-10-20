@@ -2,20 +2,20 @@
 
 A calmer workspace for managing tasks, planning your day, and tracking focus.
 
-## Team preview
+## Firebase setup
 
-The sign-in page and legal notices are presentation prototypes. The email/password form accepts demo input only: it does not authenticate, send, or save credentials. Google sign-in is not connected. The app stores task and focus data in browser local storage on the current device; it has no account service, server-side storage, or cloud sync.
+The app uses Firebase Authentication for Google sign-in, Cloud Firestore for tasks, schedules, and focus metrics, and Firebase Storage for uploaded workspace images.
 
-### Demo sign-in
+1. In Firebase Console, enable **Google** under Authentication → Sign-in method.
+2. Create a Cloud Firestore database and a Storage bucket.
+3. Add `localhost` and your production hostname under Authentication → Settings → Authorized domains.
+4. Publish the repository's `firestore.rules` and `storage.rules` in the corresponding Firebase Console Rules tabs.
+5. Copy `.env.example` to `.env.local` and fill in the web app configuration from Firebase Project settings. The local `.env.local` is ignored by Git. Restart Vite after changing it.
+6. Run the app and sign in with Google. If a browser-only workspace exists from the earlier version, it is imported into the first Google account that signs in on that browser; later accounts do not inherit it.
 
-Use these placeholder values to enter the preview:
+Firebase web configuration is included in the browser bundle, so it is not a private credential. Protect user data with the supplied Firebase security rules and apply API key restrictions in Google Cloud where appropriate. Never put Firebase Admin SDK credentials or service-account keys in this app.
 
-- **Email:** `demo@example.com`
-- **Password:** `DemoPreview123!`
-
-The form accepts any valid email address and any non-empty password; these example values are not real account credentials and are not checked or saved. Check the Terms of Use and Privacy Notice box to enable **Enter demo**. Never use a real password here.
-
-The Terms of Use and Privacy Notice shown in the app are draft disclosures for this prototype, not legal advice or a guarantee of compliance. Before any public launch, connect a real authentication provider with server-side verification, document actual data flows and service providers, add a responsible organization and privacy contact, and have counsel review the notices for the jurisdictions where the service will operate. Do not enter real passwords or sensitive personal information in the preview.
+The Terms of Use and Privacy Notice in the app are draft disclosures, not legal advice or a guarantee of compliance. Update them to reflect the deployed service, operator, retention and deletion process, and applicable jurisdictions before public launch.
 
 ## Run locally
 
@@ -46,8 +46,9 @@ src/
     scheduler/            Calendar and Pomodoro timer
     tasks/                Task list, board, and task editor
     workspace/            Notes, links, checklists, and attachments
-  store/                  App state, persistence, and starter data
+  store/                  App state, actions, and starter data
   types/                  Task, schedule, and analytics types
+  lib/                    Firebase setup and cloud data migration
   utils/                  Scheduling, date, and export helpers
   main.tsx                Browser entry point
 ```
@@ -59,4 +60,4 @@ src/
 - **Scheduler:** Plan time blocks and track focus with the Pomodoro timer.
 - **Analytics:** Review task progress and focus metrics; export reports and backups.
 
-App data is saved in this browser. Use **Export** to download a backup before clearing browser data or switching devices.
+App data syncs to the signed-in user's Firebase account. Use **Export** to download a backup before switching accounts or making major changes.

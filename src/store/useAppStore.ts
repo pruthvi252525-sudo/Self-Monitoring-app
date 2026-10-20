@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import {
   Task,
   TaskPriority,
@@ -127,8 +126,7 @@ const POMODORO_DURATIONS: Record<PomodoroMode, number> = {
 };
 
 export const useAppStore = create<AppState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       // Navigation
       activeWindow: 'tasks',
       setActiveWindow: (window) => set({ activeWindow: window }),
@@ -655,11 +653,5 @@ export const useAppStore = create<AppState>()(
         if (data.timeBlocks) set({ timeBlocks: data.timeBlocks });
         if (data.dailyMetrics) set({ dailyMetrics: data.dailyMetrics });
       },
-    }),
-    {
-      // Keep app data in this browser; this is not server-side database storage.
-      name: 'self_monitoring_app_storage_v1',
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
+    })
 );

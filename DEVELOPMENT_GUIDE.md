@@ -1,6 +1,6 @@
 # Development guide
 
-This guide describes how the app works today and where to look when you want to change it. It is a browser-only prototype: it does not have a server, account database, or Google login.
+This guide describes how the app works today and where to look when you want to change it. The app uses Firebase Authentication for Google sign-in, Cloud Firestore for app data, and Firebase Storage for uploaded workspace images.
 
 ## 1. Start the app
 
@@ -21,13 +21,15 @@ The browser entry point is `src/main.tsx`. It finds the `root` element in `index
 index.html
   -> src/main.tsx
     -> src/App.tsx
-      -> WelcomePage (demo entry screen)
+      -> WelcomePage (Google sign-in)
+        -> Firebase Authentication
+          -> per-user Firestore data
       -> Sidebar + Header + the selected app section
          -> Tasks | Workspace | Scheduler | Analytics
       -> shared modals
 ```
 
-`App.tsx` owns the currently visible section and whether the demo has been entered. Entering the demo only changes temporary React state; it is not a sign-in, and a page reload returns to the welcome screen. The app data is held separately in the Zustand store, so it can still be in browser storage when the welcome screen appears.
+`App.tsx` listens for Firebase Authentication state, loads the signed-in user's Firestore data before showing the workspace, and signs the user out through Firebase. A missing Firestore user document is initialized from the earlier browser-only data when available, or starter data otherwise.
 
 ## 3. Understand how data moves
 
@@ -38,25 +40,33 @@ User action in a component
   -> component calls an action from useAppStore
     -> action updates Zustand state with set(...)
       -> subscribed components render the new state
-      -> Zustand persist saves serializable state in browser localStorage
+      -> App.tsx debounces changes and saves tasks, time blocks, and metrics to Firestore
 ```
 
-- `src/store/useAppStore.ts` defines the app state, actions, and browser persistence.
-- The persistence key is `self_monitoring_app_storage_v1`. This is browser storage, not a database. It is local to this browser profile and device, is not encrypted by this app, and does not sync to other devices.
-- `src/store/seedData.ts` supplies starter tasks, schedule blocks, and metrics for a fresh store and for the reset action.
+- `src/store/useAppStore.ts` defines app state and actions.
+- `src/lib/firebase.ts` initializes Firebase from Vite environment variables and provides Google sign-in.
+- `src/lib/cloudData.ts` reads and writes the per-user Firestore document and imports data from the old `self_monitoring_app_storage_v1` local-storage key once.
+- `firestore.rules` restricts each user's Firestore document to that user's Firebase UID.
+- `storage.rules` restricts uploaded images to their owning user and limits image size to less than 10 MB.
+- Uploaded visual assets are stored in Firebase Storage; their download URLs are saved with the task in Firestore.
+- `src/store/seedData.ts` supplies starter tasks, schedule blocks, and metrics for a new account and for the reset action.
 - `src/types/` defines the shape of tasks, schedule blocks, focus sessions, and other shared data.
 - `src/utils/` contains reusable calculations, date helpers, and export formatting.
 
-For example, a task edit starts in a task UI component, calls `updateTask` in `useAppStore`, and updates the matching task in the `tasks` array. Components reading that task then show the changed value, and Zustand's persistence middleware saves the serializable store state.
+For example, a task edit starts in a task UI component, calls `updateTask` in `useAppStore`, and updates the matching task in the `tasks` array. Components reading that task then show the changed value, and `App.tsx` saves the updated app data to Firestore.
 
-The app has no separate API/data-access layer yet. If you later connect a backend, avoid adding database requests directly to every UI component; a dedicated data/service layer will make that transition easier to reason about.
+Database reads and writes belong in `src/lib/cloudData.ts`, rather than individual UI components.
+
+## Firebase configuration
+
+Copy `.env.example` to `.env.local` and enter the Firebase web app configuration. Enable Google in Firebase Authentication, create Firestore and Storage, add development/production authorized domains, and publish `firestore.rules` and `storage.rules` from the Firebase Console. Do not add Admin SDK credentials to the frontend.
 
 ## 4. Find the feature you want to change
 
 | Feature | Main files |
 | --- | --- |
 | App startup and section selection | `src/main.tsx`, `src/App.tsx` |
-| Welcome screen and demo-only sign-in UI | `src/components/auth/WelcomePage.tsx` |
+| Welcome screen and Google sign-in UI | `src/components/auth/WelcomePage.tsx`, `src/lib/firebase.ts` |
 | Sidebar, header, shared dialogs, and backup controls | `src/components/layout/` |
 | Task list, filters, task form, Kanban, and priority matrix | `src/components/tasks/` |
 | Task notes, checklist, resource links, and assets | `src/components/workspace/` |
@@ -96,8 +106,9 @@ The navigation value is shared state, so keep the spelling identical in the type
 
 ## 7. Things to know before relying on the prototype
 
-- The email form only opens the demo. It does not verify, send, or save credentials. Google sign-in is not implemented.
-- Tasks, notes, schedule blocks, and focus data are local to the browser profile. Clearing site data or using another device can make them unavailable. Export a JSON backup if you need a copy.
+- Sign-in uses Firebase Authentication's Google popup flow; the app does not handle Google passwords.
+- Tasks, notes, schedule blocks, and focus data sync to the signed-in user's Firestore document. Workspace image uploads use Firebase Storage.
+- Existing browser-only data is imported into the first Google account signed in on that browser when that account has no saved Firestore document. If the saved Firestore data cannot be written, the old browser data is retained.
 - The JSON export includes tasks, time blocks, and daily metrics. Restore is a basic prototype flow, not a validated database migration; only restore a backup you trust.
 - Some analytics are demonstration values. For example, the current streak is fixed in `getStreakStats` in `src/store/useAppStore.ts`; it is not calculated from a user's real history.
 - Auto-planning is a heuristic in `src/utils/autoPlanner.ts`. The store replaces the selected day's blocks with the planner's generated result. Although existing blocks are considered when finding free time, they are not included in that generated result, so review the day's blocks before relying on auto-plan alongside manually created blocks.

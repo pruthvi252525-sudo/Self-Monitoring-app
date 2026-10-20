@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import {
-  ArrowRight,
   Check,
   CheckCircle2,
-  Eye,
-  EyeOff,
   Focus,
-  LockKeyhole,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -14,7 +10,10 @@ import {
 type LegalDocument = 'terms' | 'privacy';
 
 interface WelcomePageProps {
-  onEnterDemo: () => void;
+  onGoogleSignIn: () => void;
+  firebaseConfigured: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const legalContent: Record<
@@ -34,12 +33,12 @@ const legalContent: Record<
       {
         heading: 'Your content and your device',
         body:
-          'You retain responsibility for the information you enter. In this prototype, app data is saved in this browser on this device. Anyone with access to your browser profile may be able to access it. Do not enter sensitive, confidential, financial, health, or other high-risk personal information.',
+          'You retain responsibility for the information you enter. When signed in, your tasks, notes, schedules, focus data, and uploaded images are stored in Firebase services under your account. Do not enter sensitive, confidential, financial, health, or other high-risk personal information.',
       },
       {
         heading: 'Availability and changes',
         body:
-          'This prototype is provided for demonstration and evaluation. Features, saved data, and availability may change or be removed; no backup or uninterrupted availability is guaranteed. Export important information before clearing browser data or changing devices.',
+          'This prototype is provided for demonstration and evaluation. Features, saved data, and availability may change or be removed; no backup or uninterrupted availability is guaranteed. Export important information regularly.',
       },
       {
         heading: 'Acceptable use and safety',
@@ -56,7 +55,7 @@ const legalContent: Record<
   privacy: {
     title: 'Privacy notice',
     intro:
-      'Draft for team review · Effective date: October 13, 2026 · Describes this browser-only demonstration.',
+      'Draft for team review · Effective date: October 13, 2026 · Describes Google sign-in and Firebase cloud storage.',
     sections: [
       {
         heading: 'Who operates this service',
@@ -66,22 +65,22 @@ const legalContent: Record<
       {
         heading: 'Information and storage',
         body:
-          'Tasks, notes, schedule entries, and focus data are stored in this browser’s local storage on this device. This prototype does not include an application server, account database, or cloud sync. Anyone with access to the same browser profile may be able to see locally saved data.',
+          'Tasks, notes, schedule entries, and focus data are stored in Cloud Firestore under your Google account. Uploaded workspace images are stored in Firebase Storage. Firebase Authentication processes sign-in and basic Google profile information. Review Google’s privacy information and the project operator’s final data-handling policy before production use.',
       },
       {
         heading: 'Sign-in and third parties',
         body:
-          'The email-and-password form is a demonstration only: credentials are not verified, transmitted, or saved. Google sign-in is not connected; the button only explains the setup required. Do not enter a real password. No analytics, advertising, or tracking service is configured in this prototype. The web host and any resources enabled in a future release may process technical data under their own terms.',
+          'Google sign-in is provided by Firebase Authentication. This app does not receive or store your Google password. Google and Firebase may process technical and account information as described in their terms and privacy notices. No Firebase Analytics service is initialized by this app.',
       },
       {
         heading: 'Your choices and data deletion',
         body:
-          'You can export app data using Backup, and remove data by clearing this site’s browser storage. Exports are downloaded to your device and are not encrypted by this app. Clearing browser storage may permanently delete data; keep your own secure backup if needed.',
+          'You can export app data using Backup. Signing out does not delete cloud data. Account data deletion must be performed by the service operator or by an account deletion feature if one is added. Exports are downloaded to your device and are not encrypted by this app.',
       },
       {
         heading: 'Security, retention, and children',
         body:
-          'Local browser storage is not encrypted by this app and is not a secure account system. Keep devices protected and avoid shared devices for private information. Data remains in the browser until you clear it. This prototype is not designed for children; do not use it to collect children’s information.',
+          'Firebase Security Rules restrict access to the signed-in account. The app operator remains responsible for rules, retention, backups, and deletion. This prototype is not designed for children; do not use it to collect children’s information.',
       },
       {
         heading: 'Before production',
@@ -92,20 +91,14 @@ const legalContent: Record<
   },
 };
 
-export const WelcomePage: React.FC<WelcomePageProps> = ({ onEnterDemo }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export const WelcomePage: React.FC<WelcomePageProps> = ({
+  onGoogleSignIn,
+  firebaseConfigured,
+  isLoading,
+  error,
+}) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(null);
-  const [notice, setNotice] = useState('');
-
-  const handleEmailSignIn = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!acceptedTerms) return;
-    setNotice('');
-    onEnterDemo();
-  };
 
   return (
     <main className="welcome-page min-h-screen px-4 py-8 sm:px-8 lg:px-12">
@@ -120,7 +113,7 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({ onEnterDemo }) => {
             </span>
           </a>
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400">
-            Team preview
+            Firebase account
           </span>
         </header>
 
@@ -176,8 +169,8 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({ onEnterDemo }) => {
             </div>
 
             <p className="mt-5 hidden items-center gap-2 text-xs text-slate-500 sm:flex">
-              <LockKeyhole className="h-3.5 w-3.5" />
-              Demo data stays in this browser
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Your workspace syncs to Firebase
             </p>
           </section>
 
@@ -195,135 +188,77 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({ onEnterDemo }) => {
                 </p>
               </div>
 
+              <label className="mb-5 flex cursor-pointer items-start gap-2.5">
+                <input
+                  checked={acceptedTerms}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-indigo-400"
+                  onChange={(event) => setAcceptedTerms(event.target.checked)}
+                  type="checkbox"
+                />
+                <span className="text-xs leading-5 text-slate-400">
+                  I agree to the{' '}
+                  <button
+                    className="text-indigo-300 underline decoration-indigo-300/30 underline-offset-2 hover:text-indigo-200"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setLegalDocument('terms');
+                    }}
+                    type="button"
+                  >
+                    Terms of use
+                  </button>{' '}
+                  and acknowledge the{' '}
+                  <button
+                    className="text-indigo-300 underline decoration-indigo-300/30 underline-offset-2 hover:text-indigo-200"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setLegalDocument('privacy');
+                    }}
+                    type="button"
+                  >
+                    Privacy notice
+                  </button>
+                  .
+                </span>
+              </label>
+
               <button
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-white/20 hover:bg-white/[0.075] focus:outline-none focus:ring-2 focus:ring-indigo-400/60 disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={!firebaseConfigured || !acceptedTerms || isLoading}
+                onClick={onGoogleSignIn}
                 type="button"
-                onClick={() =>
-                  setNotice(
-                    'Google sign-in is not connected in this preview. A Google OAuth client and secure server-side token verification are required before launch.'
-                  )
-                }
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-white/20 hover:bg-white/[0.075] focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
               >
                 <GoogleMark />
-                Continue with Google
+                {isLoading ? 'Connecting…' : 'Continue with Google'}
               </button>
 
-              <div className="my-6 flex items-center gap-3">
-                <span className="h-px flex-1 bg-white/[0.08]" />
-                <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
-                  or use email
-                </span>
-                <span className="h-px flex-1 bg-white/[0.08]" />
-              </div>
-
-              <form onSubmit={handleEmailSignIn} className="space-y-4">
-                <label className="block">
-                  <span className="mb-2 block text-xs font-medium text-slate-300">
-                    Email address
-                  </span>
-                  <input
-                    autoComplete="email"
-                    className="welcome-input w-full rounded-xl border px-3.5 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-400/70 focus:outline-none focus:ring-2 focus:ring-indigo-400/15"
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    type="email"
-                    value={email}
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-medium text-slate-300">
-                    Password
-                  </span>
-                  <span className="relative block">
-                    <input
-                      autoComplete="current-password"
-                      className="welcome-input w-full rounded-xl border px-3.5 py-3 pr-11 text-sm text-white placeholder:text-slate-600 focus:border-indigo-400/70 focus:outline-none focus:ring-2 focus:ring-indigo-400/15"
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Enter your password"
-                      required
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                    />
-                    <button
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 transition hover:text-slate-300"
-                      onClick={() => setShowPassword((visible) => !visible)}
-                      type="button"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </span>
-                </label>
-
-                <label className="flex cursor-pointer items-start gap-2.5 pt-1">
-                  <input
-                    checked={acceptedTerms}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-indigo-400"
-                    onChange={(event) => setAcceptedTerms(event.target.checked)}
-                    required
-                    type="checkbox"
-                  />
-                  <span className="text-xs leading-5 text-slate-400">
-                    I agree to the{' '}
-                    <button
-                      className="text-indigo-300 underline decoration-indigo-300/30 underline-offset-2 hover:text-indigo-200"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        setLegalDocument('terms');
-                      }}
-                      type="button"
-                    >
-                      Terms of use
-                    </button>{' '}
-                    and acknowledge the{' '}
-                    <button
-                      className="text-indigo-300 underline decoration-indigo-300/30 underline-offset-2 hover:text-indigo-200"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        setLegalDocument('privacy');
-                      }}
-                      type="button"
-                    >
-                      Privacy notice
-                    </button>
-                    .
-                  </span>
-                </label>
-
-                <button
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-950/30 transition hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-300/60 focus:ring-offset-2 focus:ring-offset-[#11121a] disabled:cursor-not-allowed disabled:opacity-40"
-                  disabled={!acceptedTerms || !email || !password}
-                  type="submit"
-                >
-                  Enter demo
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </button>
-              </form>
-
-              {notice && (
+              {!firebaseConfigured && (
+                <p className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[0.06] px-3.5 py-3 text-xs leading-5 text-amber-100/80">
+                  Firebase is not configured. Add the Firebase web app settings to <code>.env.local</code> and restart the app.
+                </p>
+              )}
+              {error && (
                 <p
                   aria-live="polite"
                   className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[0.06] px-3.5 py-3 text-xs leading-5 text-amber-100/80"
+                  role="alert"
                 >
-                  {notice}
+                  {error}
                 </p>
               )}
 
               <p className="mt-5 text-center text-[11px] leading-5 text-slate-500">
-                Preview only · Your entries are not verified, sent, or saved.
-                <br />
-                Don’t use a real password.
+                Sign in securely with your Google account. Your workspace is saved to Firebase.
               </p>
             </div>
           </section>
         </div>
 
         <footer className="flex flex-col items-center justify-between gap-2 border-t border-white/[0.06] py-5 text-center text-[11px] text-slate-500 sm:flex-row sm:text-left">
-          <span>© 2026 Self-Monitor · Team preview</span>
+          <span>© 2026 Self-Monitor</span>
           <span className="flex items-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/70" />
-            No real account or cloud sync is configured
+            Google sign-in · Firebase cloud storage
           </span>
         </footer>
       </div>
