@@ -15,6 +15,8 @@ import {
   auth,
   getFirebaseErrorMessage,
   isFirebaseConfigured,
+  registerWithEmail,
+  signInWithEmail,
   signInWithGoogle,
   signOut,
 } from './lib/firebase';
@@ -197,6 +199,30 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleEmailPasswordSignIn = async (email: string, password: string) => {
+    setAuthError(null);
+    setIsSigningIn(true);
+    try {
+      await signInWithEmail(email, password);
+    } catch (error) {
+      setAuthError(getFirebaseErrorMessage(error));
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleEmailPasswordRegister = async (email: string, password: string) => {
+    setAuthError(null);
+    setIsSigningIn(true);
+    try {
+      await registerWithEmail(email, password);
+    } catch (error) {
+      setAuthError(getFirebaseErrorMessage(error));
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
   const handleSignOut = async () => {
     setAuthError(null);
     try {
@@ -216,6 +242,8 @@ export const App: React.FC = () => {
         error={authError}
         firebaseConfigured={isFirebaseConfigured}
         isLoading={isSigningIn}
+        onEmailPasswordRegister={handleEmailPasswordRegister}
+        onEmailPasswordSignIn={handleEmailPasswordSignIn}
         onGoogleSignIn={handleGoogleSignIn}
       />
     );
@@ -234,7 +262,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-shell flex min-h-screen bg-dark-950 font-sans text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
-      <Sidebar onSignOut={handleSignOut} userName={user.displayName || user.email || 'Google user'} />
+      <Sidebar onSignOut={handleSignOut} userName={user.displayName || user.email || 'Firebase user'} />
 
       <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-y-auto">
         {(syncError || authError) && (

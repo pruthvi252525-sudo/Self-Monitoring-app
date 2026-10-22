@@ -11,6 +11,8 @@ type LegalDocument = 'terms' | 'privacy';
 
 interface WelcomePageProps {
   onGoogleSignIn: () => void;
+  onEmailPasswordSignIn: (email: string, password: string) => void;
+  onEmailPasswordRegister: (email: string, password: string) => void;
   firebaseConfigured: boolean;
   isLoading: boolean;
   error: string | null;
@@ -55,7 +57,7 @@ const legalContent: Record<
   privacy: {
     title: 'Privacy notice',
     intro:
-      'Draft for team review · Effective date: October 13, 2026 · Describes Google sign-in and Firebase cloud storage.',
+      'Draft for team review · Effective date: October 13, 2026 · Describes Firebase sign-in and cloud storage.',
     sections: [
       {
         heading: 'Who operates this service',
@@ -65,12 +67,12 @@ const legalContent: Record<
       {
         heading: 'Information and storage',
         body:
-          'Tasks, notes, schedule entries, and focus data are stored in Cloud Firestore under your Google account. Uploaded workspace images are stored in Firebase Storage. Firebase Authentication processes sign-in and basic Google profile information. Review Google’s privacy information and the project operator’s final data-handling policy before production use.',
+            'Tasks, notes, schedule entries, and focus data are stored in Cloud Firestore under your Firebase account. Uploaded workspace images are stored in Firebase Storage. Firebase Authentication processes sign-in and account information. Review the relevant provider privacy information and the project operator’s final data-handling policy before production use.',
       },
       {
         heading: 'Sign-in and third parties',
         body:
-          'Google sign-in is provided by Firebase Authentication. This app does not receive or store your Google password. Google and Firebase may process technical and account information as described in their terms and privacy notices. No Firebase Analytics service is initialized by this app.',
+            'Google and email/password sign-in are provided by Firebase Authentication. This app does not receive or store your Google or email account password; Firebase Authentication manages credentials. Google and Firebase may process technical and account information as described in their terms and privacy notices. No Firebase Analytics service is initialized by this app.',
       },
       {
         heading: 'Your choices and data deletion',
@@ -93,12 +95,26 @@ const legalContent: Record<
 
 export const WelcomePage: React.FC<WelcomePageProps> = ({
   onGoogleSignIn,
+  onEmailPasswordSignIn,
+  onEmailPasswordRegister,
   firebaseConfigured,
   isLoading,
   error,
 }) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(null);
+  const [authMode, setAuthMode] = useState<'sign-in' | 'register'>('sign-in');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleEmailPasswordSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (authMode === 'register') {
+      onEmailPasswordRegister(email, password);
+    } else {
+      onEmailPasswordSignIn(email, password);
+    }
+  };
 
   return (
     <main className="welcome-page min-h-screen px-4 py-8 sm:px-8 lg:px-12">
@@ -222,6 +238,67 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
                 </span>
               </label>
 
+              <form className="space-y-4" onSubmit={handleEmailPasswordSubmit}>
+                <label className="block text-xs font-medium text-slate-300">
+                  Email
+                  <input
+                    autoComplete="email"
+                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
+                    disabled={!firebaseConfigured || isLoading}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    type="email"
+                    value={email}
+                  />
+                </label>
+                <label className="block text-xs font-medium text-slate-300">
+                  Password
+                  <input
+                    autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
+                    disabled={!firebaseConfigured || isLoading}
+                    minLength={authMode === 'register' ? 6 : undefined}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="At least 6 characters"
+                    required
+                    type="password"
+                    value={password}
+                  />
+                </label>
+                <button
+                  className="w-full rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-300/60 disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={!firebaseConfigured || !acceptedTerms || isLoading}
+                  type="submit"
+                >
+                  {isLoading
+                    ? 'Connecting…'
+                    : authMode === 'register'
+                      ? 'Create account'
+                      : 'Sign in with email'}
+                </button>
+              </form>
+
+              <p className="mt-3 text-center text-xs text-slate-500">
+                {authMode === 'register' ? 'Already registered?' : 'New to Self-Monitor?'}{' '}
+                <button
+                  className="font-medium text-indigo-300 hover:text-indigo-200"
+                  disabled={isLoading}
+                  onClick={() =>
+                    setAuthMode((mode) => (mode === 'register' ? 'sign-in' : 'register'))
+                  }
+                  type="button"
+                >
+                  {authMode === 'register' ? 'Sign in' : 'Create an account'}
+                </button>
+              </p>
+
+              <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-slate-600">
+                <span className="h-px flex-1 bg-white/[0.08]" />
+                or
+                <span className="h-px flex-1 bg-white/[0.08]" />
+              </div>
+
               <button
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-white/20 hover:bg-white/[0.075] focus:outline-none focus:ring-2 focus:ring-indigo-400/60 disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={!firebaseConfigured || !acceptedTerms || isLoading}
@@ -248,7 +325,7 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
               )}
 
               <p className="mt-5 text-center text-[11px] leading-5 text-slate-500">
-                Sign in securely with your Google account. Your workspace is saved to Firebase.
+                Your workspace is saved to Firebase and available when you sign in again.
               </p>
             </div>
           </section>
@@ -258,7 +335,7 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
           <span>© 2026 Self-Monitor</span>
           <span className="flex items-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400/70" />
-            Google sign-in · Firebase cloud storage
+            Email or Google sign-in · Firebase cloud storage
           </span>
         </footer>
       </div>
