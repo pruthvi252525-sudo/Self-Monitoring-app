@@ -1,7 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import {
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   getAuth,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
@@ -40,6 +42,16 @@ export async function signInWithGoogle(): Promise<void> {
   await signInWithPopup(auth, new GoogleAuthProvider());
 }
 
+export async function signInWithEmail(email: string, password: string): Promise<void> {
+  if (!auth) throw new Error('Firebase is not configured. Add the Firebase settings and restart the app.');
+  await signInWithEmailAndPassword(auth, email, password);
+}
+
+export async function registerWithEmail(email: string, password: string): Promise<void> {
+  if (!auth) throw new Error('Firebase is not configured. Add the Firebase settings and restart the app.');
+  await createUserWithEmailAndPassword(auth, email, password);
+}
+
 export async function signOut(): Promise<void> {
   if (!auth) throw new Error('Firebase is not configured.');
   await firebaseSignOut(auth);
@@ -55,7 +67,24 @@ export function getFirebaseErrorMessage(error: unknown): string {
       case 'auth/unauthorized-domain':
         return 'This site is not authorized for Firebase sign-in. Add its domain in Firebase Authentication settings.';
       case 'auth/operation-not-allowed':
-        return 'Google sign-in is not enabled for this Firebase project.';
+        return 'This sign-in method is not enabled for the Firebase project. Enable it in Firebase Authentication settings.';
+      case 'auth/email-already-in-use':
+        return 'An account already exists for this email. Sign in instead.';
+      case 'auth/invalid-email':
+        return 'Enter a valid email address.';
+      case 'auth/invalid-credential':
+      case 'auth/invalid-login-credentials':
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+        return 'The email or password is incorrect.';
+      case 'auth/weak-password':
+        return 'Choose a password with at least 6 characters.';
+      case 'auth/user-disabled':
+        return 'This account has been disabled. Contact the app administrator.';
+      case 'auth/too-many-requests':
+        return 'Too many sign-in attempts. Wait a moment and try again.';
+      case 'auth/network-request-failed':
+        return 'Could not reach Firebase. Check your internet connection and try again.';
       case 'permission-denied':
         return 'Firebase denied access. Check that the Firestore and Storage security rules are published.';
     }
