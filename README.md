@@ -13,6 +13,8 @@ The app uses Firebase Authentication for email/password and Google sign-in, Clou
 5. Copy `.env.example` to `.env.local` and fill in the web app configuration from Firebase Project settings. The local `.env.local` is ignored by Git. Restart Vite after changing it.
 6. Run the app, create an account with an email address and password, or sign in with Google. If a browser-only workspace exists from the earlier version, it is imported into the first account that signs in on that browser; later accounts do not inherit it.
 
+If the login page says Firebase is not configured, check that `.env.local` is in the project root and includes every variable listed in `.env.example`. The page identifies missing variable names without showing their values. Stop and restart the Vite dev server after updating the file.
+
 Firebase web configuration is included in the browser bundle, so it is not a private credential. Protect user data with the supplied Firebase security rules and apply API key restrictions in Google Cloud where appropriate. Never put Firebase Admin SDK credentials or service-account keys in this app.
 
 The Terms of Use and Privacy Notice in the app are draft disclosures, not legal advice or a guarantee of compliance. Update them to reflect the deployed service, operator, retention and deletion process, and applicable jurisdictions before public launch.

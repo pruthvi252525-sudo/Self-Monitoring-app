@@ -15,6 +15,7 @@ import {
   auth,
   getFirebaseErrorMessage,
   isFirebaseConfigured,
+  missingFirebaseEnvVariables,
   registerWithEmail,
   signInWithEmail,
   signInWithGoogle,
@@ -241,6 +242,7 @@ export const App: React.FC = () => {
       <WelcomePage
         error={authError}
         firebaseConfigured={isFirebaseConfigured}
+        missingFirebaseEnvVariables={missingFirebaseEnvVariables}
         isLoading={isSigningIn}
         onEmailPasswordRegister={handleEmailPasswordRegister}
         onEmailPasswordSignIn={handleEmailPasswordSignIn}
