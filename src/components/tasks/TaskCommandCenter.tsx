@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CheckCircle2, Plus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { Task } from '../../types';
 import { TaskFilterBar } from './TaskFilterBar';
@@ -6,39 +7,33 @@ import { TaskListView } from './TaskListView';
 import { EisenhowerMatrix } from './EisenhowerMatrix';
 import { KanbanBoard } from './KanbanBoard';
 import { TaskModal } from './TaskModal';
-import { Plus, Flame, CheckCircle2, BookOpen, Code2 } from 'lucide-react';
 
 export const TaskCommandCenter: React.FC = () => {
   const {
     tasks,
     taskFilter,
     taskViewMode,
+    setQuickTaskModalOpen,
   } = useAppStore();
-
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Filter tasks based on store state
   const filteredTasks = tasks.filter((task) => {
-    // Search query
     if (taskFilter.search.trim()) {
-      const q = taskFilter.search.toLowerCase();
-      const matchTitle = task.title.toLowerCase().includes(q);
-      const matchDesc = task.description?.toLowerCase().includes(q);
-      const matchNotes = task.notes?.toLowerCase().includes(q);
-      if (!matchTitle && !matchDesc && !matchNotes) return false;
+      const query = taskFilter.search.toLowerCase();
+      const matchesTitle = task.title.toLowerCase().includes(query);
+      const matchesDescription = task.description?.toLowerCase().includes(query);
+      const matchesNotes = task.notes?.toLowerCase().includes(query);
+      if (!matchesTitle && !matchesDescription && !matchesNotes) return false;
     }
 
-    // Category filter
     if (taskFilter.category !== 'all' && task.category !== taskFilter.category) {
       return false;
     }
 
-    // Priority filter
     if (taskFilter.priority !== 'all' && task.priority !== taskFilter.priority) {
       return false;
     }
 
-    // Status filter
     if (taskFilter.status === 'active' && task.status === 'completed') {
       return false;
     }
@@ -49,60 +44,37 @@ export const TaskCommandCenter: React.FC = () => {
     return true;
   });
 
-  const p1Count = tasks.filter((t) => t.priority === 'P1' && t.status !== 'completed').length;
-  const academicCount = tasks.filter((t) => t.category === 'Academic' && t.status !== 'completed').length;
-  const devCount = tasks.filter((t) => t.category === 'Dev Project' && t.status !== 'completed').length;
-  const completedCount = tasks.filter((t) => t.status === 'completed').length;
+  const openCount = tasks.filter((task) => task.status !== 'completed').length;
+  const completedCount = tasks.filter((task) => task.status === 'completed').length;
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Quick Summary Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-dark-900 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] text-slate-400 font-medium">Critical (P1)</span>
-            <div className="text-xl font-bold font-mono text-red-400 mt-0.5">{p1Count}</div>
-          </div>
-          <div className="p-2 rounded-lg bg-red-500/10 text-red-400">
-            <Flame className="w-5 h-5" />
-          </div>
+    <div className="space-y-4 pb-12 sm:space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-100">
+            Your priorities
+          </h1>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+            <span>{openCount} open</span>
+            <span aria-hidden="true">·</span>
+            <span className="inline-flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+              {completedCount} completed
+            </span>
+          </p>
         </div>
-
-        <div className="bg-dark-900 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] text-slate-400 font-medium">Coursework</span>
-            <div className="text-xl font-bold font-mono text-purple-400 mt-0.5">{academicCount}</div>
-          </div>
-          <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
-            <BookOpen className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-dark-900 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] text-slate-400 font-medium">Dev Projects</span>
-            <div className="text-xl font-bold font-mono text-emerald-400 mt-0.5">{devCount}</div>
-          </div>
-          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-            <Code2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-dark-900 border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] text-slate-400 font-medium">Completed</span>
-            <div className="text-xl font-bold font-mono text-indigo-400 mt-0.5">{completedCount}</div>
-          </div>
-          <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
+        <button
+          className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400"
+          onClick={() => setQuickTaskModalOpen(true)}
+          type="button"
+        >
+          <Plus className="h-4 w-4" />
+          Add task
+        </button>
       </div>
 
-      {/* Filter and View Toggler Bar */}
       <TaskFilterBar />
 
-      {/* Main View Display */}
       {taskViewMode === 'table' && (
         <TaskListView
           tasks={filteredTasks}
@@ -121,7 +93,6 @@ export const TaskCommandCenter: React.FC = () => {
         />
       )}
 
-      {/* Edit Task Modal */}
       <TaskModal
         isOpen={editingTask !== null}
         onClose={() => setEditingTask(null)}
@@ -130,4 +101,3 @@ export const TaskCommandCenter: React.FC = () => {
     </div>
   );
 };
-
