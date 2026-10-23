@@ -15,10 +15,7 @@ import {
   auth,
   getFirebaseErrorMessage,
   isFirebaseConfigured,
-agents/understanding-gitignore-file
-
   missingFirebaseEnvVariables,
-main
   registerWithEmail,
   signInWithEmail,
   signInWithGoogle,
