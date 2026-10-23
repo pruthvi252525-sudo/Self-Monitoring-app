@@ -14,6 +14,7 @@ interface WelcomePageProps {
   onEmailPasswordSignIn: (email: string, password: string) => void;
   onEmailPasswordRegister: (email: string, password: string) => void;
   firebaseConfigured: boolean;
+  missingFirebaseEnvVariables: string[];
   isLoading: boolean;
   error: string | null;
 }
@@ -98,6 +99,7 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
   onEmailPasswordSignIn,
   onEmailPasswordRegister,
   firebaseConfigured,
+  missingFirebaseEnvVariables,
   isLoading,
   error,
 }) => {
@@ -311,7 +313,13 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
 
               {!firebaseConfigured && (
                 <p className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[0.06] px-3.5 py-3 text-xs leading-5 text-amber-100/80">
-                  Firebase is not configured. Add the Firebase web app settings to <code>.env.local</code> and restart the app.
+                  Firebase setup is incomplete. Add these settings to <code>.env.local</code> in the project root:
+                  <span className="mt-2 block font-mono text-[11px]">
+                    {missingFirebaseEnvVariables.join(', ')}
+                  </span>
+                  <span className="mt-2 block">
+                    After saving, stop and restart the Vite dev server.
+                  </span>
                 </p>
               )}
               {error && (
