@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { useAppStore } from './store/useAppStore';
 import { Sidebar } from './components/layout/Sidebar';
@@ -17,6 +17,8 @@ import {
   isFirebaseConfigured,
   missingFirebaseEnvVariables,
   registerWithEmail,
+  resendEmailVerification,
+  sendPasswordReset,
   signInWithEmail,
   signInWithGoogle,
   signOut,
@@ -41,8 +43,10 @@ export const App: React.FC = () => {
   const [appDataReady, setAppDataReady] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const registrationInProgress = useRef(false);
   const {
     activeWindow,
     setActiveWindow,
@@ -62,9 +66,28 @@ export const App: React.FC = () => {
     return onAuthStateChanged(
       auth,
       (nextUser) => {
+        if (
+          nextUser &&
+          !nextUser.emailVerified &&
+          nextUser.providerData.some((provider) => provider.providerId === 'password')
+        ) {
+          setAppDataReady(false);
+          setUser(null);
+          if (registrationInProgress.current) {
+            setAuthReady(true);
+            return;
+          }
+          setAuthError('Verify your email before signing in. You can resend the verification email below.');
+          void signOut().catch((error: unknown) => {
+            setAuthError(getFirebaseErrorMessage(error));
+          });
+          setAuthReady(true);
+          return;
+        }
         setAppDataReady(false);
         setSyncError(null);
         setAuthError(null);
+        setAuthSuccess(null);
         setUser(nextUser);
         setAuthReady(true);
       },
@@ -190,6 +213,7 @@ export const App: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     setAuthError(null);
+    setAuthSuccess(null);
     setIsSigningIn(true);
     try {
       await signInWithGoogle();
@@ -202,6 +226,7 @@ export const App: React.FC = () => {
 
   const handleEmailPasswordSignIn = async (email: string, password: string) => {
     setAuthError(null);
+    setAuthSuccess(null);
     setIsSigningIn(true);
     try {
       await signInWithEmail(email, password);
@@ -214,11 +239,52 @@ export const App: React.FC = () => {
 
   const handleEmailPasswordRegister = async (email: string, password: string) => {
     setAuthError(null);
+    setAuthSuccess(null);
     setIsSigningIn(true);
+    registrationInProgress.current = true;
     try {
       await registerWithEmail(email, password);
+      setAuthSuccess('Account created. Check your inbox for a verification link before signing in.');
     } catch (error) {
       setAuthError(getFirebaseErrorMessage(error));
+    } finally {
+      registrationInProgress.current = false;
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleResendEmailVerification = async (email: string, password: string) => {
+    setAuthError(null);
+    setAuthSuccess(null);
+    setIsSigningIn(true);
+    try {
+      await resendEmailVerification(email, password);
+      setAuthSuccess('A new verification link has been sent. Check your inbox and spam folder.');
+    } catch (error) {
+      setAuthError(getFirebaseErrorMessage(error));
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handlePasswordReset = async (email: string) => {
+    setAuthError(null);
+    setAuthSuccess(null);
+    setIsSigningIn(true);
+    try {
+      await sendPasswordReset(email);
+      setAuthSuccess('If an account exists for that email, a password reset link has been sent.');
+    } catch (error) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'auth/user-not-found'
+      ) {
+        setAuthSuccess('If an account exists for that email, a password reset link has been sent.');
+      } else {
+        setAuthError(getFirebaseErrorMessage(error));
+      }
     } finally {
       setIsSigningIn(false);
     }
@@ -245,8 +311,11 @@ export const App: React.FC = () => {
         missingFirebaseEnvVariables={missingFirebaseEnvVariables}
         isLoading={isSigningIn}
         onEmailPasswordRegister={handleEmailPasswordRegister}
+        onEmailPasswordResendVerification={handleResendEmailVerification}
         onEmailPasswordSignIn={handleEmailPasswordSignIn}
         onGoogleSignIn={handleGoogleSignIn}
+        onPasswordReset={handlePasswordReset}
+        success={authSuccess}
       />
     );
   }
@@ -278,9 +347,9 @@ export const App: React.FC = () => {
               : authError}
           </div>
         )}
-        <Header />
+        <Header userId={user.uid} />
 
-        <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 w-full max-w-7xl mx-auto p-4 pb-24 sm:p-6">
           {activeWindow === 'tasks' && <TaskCommandCenter />}
           {activeWindow === 'workspace' && <DynamicWorkspace />}
           {activeWindow === 'scheduler' && <SmartScheduler />}

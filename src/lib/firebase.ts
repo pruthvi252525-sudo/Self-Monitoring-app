@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import {
   createUserWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   GoogleAuthProvider,
   getAuth,
   signInWithEmailAndPassword,
@@ -55,12 +57,45 @@ export async function signInWithGoogle(): Promise<void> {
 
 export async function signInWithEmail(email: string, password: string): Promise<void> {
   if (!auth) throw new Error('Firebase is not configured. Add the Firebase settings and restart the app.');
-  await signInWithEmailAndPassword(auth, email, password);
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  if (!credential.user.emailVerified) {
+    await firebaseSignOut(auth);
+    throw Object.assign(new Error('Verify your email before signing in.'), {
+      code: 'auth/email-not-verified',
+    });
+  }
 }
 
 export async function registerWithEmail(email: string, password: string): Promise<void> {
   if (!auth) throw new Error('Firebase is not configured. Add the Firebase settings and restart the app.');
-  await createUserWithEmailAndPassword(auth, email, password);
+  const credential = await createUserWithEmailAndPassword(auth, email, password);
+  try {
+    await sendEmailVerification(credential.user);
+  } catch (error) {
+    await firebaseSignOut(auth);
+    throw error;
+  }
+  await firebaseSignOut(auth);
+}
+
+export async function resendEmailVerification(email: string, password: string): Promise<void> {
+  if (!auth) throw new Error('Firebase is not configured. Add the Firebase settings and restart the app.');
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  try {
+    if (credential.user.emailVerified) {
+      throw Object.assign(new Error('This email address is already verified. You can sign in.'), {
+        code: 'auth/email-already-verified',
+      });
+    }
+    await sendEmailVerification(credential.user);
+  } finally {
+    await firebaseSignOut(auth);
+  }
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  if (!auth) throw new Error('Firebase is not configured. Add the Firebase settings and restart the app.');
+  await sendPasswordResetEmail(auth, email);
 }
 
 export async function signOut(): Promise<void> {
@@ -81,6 +116,14 @@ export function getFirebaseErrorMessage(error: unknown): string {
         return 'This sign-in method is not enabled for the Firebase project. Enable it in Firebase Authentication settings.';
       case 'auth/email-already-in-use':
         return 'An account already exists for this email. Sign in instead.';
+      case 'auth/email-not-verified':
+        return 'Check your inbox and verify your email before signing in. You can resend the verification email below.';
+      case 'auth/email-already-verified':
+        return 'This email address is already verified. You can sign in.';
+      case 'auth/expired-action-code':
+        return 'This email link has expired. Request a new email and try again.';
+      case 'auth/invalid-action-code':
+        return 'This email link is invalid or has already been used. Request a new email and try again.';
       case 'auth/invalid-email':
         return 'Enter a valid email address.';
       case 'auth/invalid-credential':
