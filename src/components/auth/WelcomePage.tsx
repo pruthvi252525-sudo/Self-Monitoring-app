@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import {
   Check,
   CheckCircle2,
+  Eye,
+  EyeOff,
   Focus,
   Sparkles,
   X,
@@ -114,6 +116,7 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
   const [authMode, setAuthMode] = useState<'sign-in' | 'register' | 'reset'>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleEmailPasswordSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -273,17 +276,31 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
                 {authMode !== 'reset' && (
                   <label className="block text-xs font-medium text-slate-300">
                     Password
-                    <input
-                      autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
-                      className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
-                      disabled={!firebaseConfigured || isLoading}
-                      minLength={authMode === 'register' ? 6 : undefined}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="At least 6 characters"
-                      required
-                      type="password"
-                      value={password}
-                    />
+                    <span className="relative mt-1.5 block">
+                      <input
+                        autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-3.5 pr-11 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
+                        disabled={!firebaseConfigured || isLoading}
+                        minLength={authMode === 'register' ? 6 : undefined}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="At least 6 characters"
+                        required
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                      />
+                      <button
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        aria-pressed={showPassword}
+                        className="absolute inset-y-0 right-2 flex w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/[0.06] hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+                        onClick={() => setShowPassword((visible) => !visible)}
+                        title={showPassword ? 'Hide password' : 'Show password'}
+                        type="button"
+                      >
+                        {showPassword
+                          ? <EyeOff aria-hidden="true" className="h-4 w-4" />
+                          : <Eye aria-hidden="true" className="h-4 w-4" />}
+                      </button>
+                    </span>
                   </label>
                 )}
                 <button
