@@ -21,10 +21,10 @@ The browser entry point is `src/main.tsx`. It finds the `root` element in `index
 index.html
   -> src/main.tsx
     -> src/App.tsx
-      -> WelcomePage (email/password or Google sign-in and registration)
+      -> WelcomePage (email/password or Google sign-in, verification, and password reset)
         -> Firebase Authentication
           -> per-user Firestore data
-      -> Sidebar + Header + the selected app section
+      -> Sidebar + Header + mobile navigation + task notifications + the selected app section
          -> Tasks | Workspace | Scheduler | Analytics
       -> shared modals
 ```
@@ -44,7 +44,7 @@ User action in a component
 ```
 
 - `src/store/useAppStore.ts` defines app state and actions.
-- `src/lib/firebase.ts` initializes Firebase from Vite environment variables and provides email/password and Google authentication.
+- `src/lib/firebase.ts` initializes Firebase from Vite environment variables and provides email/password and Google authentication, email verification, and password reset.
 - `src/lib/cloudData.ts` reads and writes the per-user Firestore document and imports data from the old `self_monitoring_app_storage_v1` local-storage key once.
 - `firestore.rules` restricts each user's Firestore document to that user's Firebase UID.
 - `storage.rules` restricts uploaded images to their owning user and limits image size to less than 10 MB.
@@ -59,7 +59,11 @@ Database reads and writes belong in `src/lib/cloudData.ts`, rather than individu
 
 ## Firebase configuration
 
-Copy `.env.example` to `.env.local` and enter the Firebase web app configuration. Enable Email/Password and Google in Firebase Authentication, create Firestore and Storage, add development/production authorized domains, and publish `firestore.rules` and `storage.rules` from the Firebase Console. For Vercel, add all `VITE_FIREBASE_*` variables in the project settings for Preview and Production, then redeploy. Do not add Admin SDK credentials to the frontend. Google sign-in uses Firebase Authentication's browser SDK and does not require a separate server-side token-verification endpoint.
+Copy `.env.example` to `.env.local` and enter the Firebase web app configuration. Enable Email/Password and Google in Firebase Authentication, configure the email verification and password reset templates, create Firestore and Storage, add development/production authorized domains, and publish `firestore.rules` and `storage.rules` from the Firebase Console. Email/password accounts must verify their email before entering the workspace; Google sign-in uses the provider's verified account. For Vercel, add all `VITE_FIREBASE_*` variables in the project settings for Preview and Production, then redeploy. Do not add Admin SDK credentials to the frontend. Google sign-in uses Firebase Authentication's browser SDK and does not require a separate server-side token-verification endpoint.
+
+## Task reminders and mobile navigation
+
+The mobile layout replaces the desktop sidebar with a fixed bottom navigation bar. The notification center reports task status/checklist progress and checks incomplete task deadlines while the app is open. It can also use browser notifications after the user grants permission. Browsers do not run these client-side deadline checks after the app is closed; delivering alerts in the background requires a service worker and a trusted server-side scheduling/push setup.
 
 ## 4. Find the feature you want to change
 

@@ -13,10 +13,13 @@ interface WelcomePageProps {
   onGoogleSignIn: () => void;
   onEmailPasswordSignIn: (email: string, password: string) => void;
   onEmailPasswordRegister: (email: string, password: string) => void;
+  onEmailPasswordResendVerification: (email: string, password: string) => void;
+  onPasswordReset: (email: string) => void;
   firebaseConfigured: boolean;
   missingFirebaseEnvVariables: string[];
   isLoading: boolean;
   error: string | null;
+  success: string | null;
 }
 
 const legalContent: Record<
@@ -98,14 +101,17 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
   onGoogleSignIn,
   onEmailPasswordSignIn,
   onEmailPasswordRegister,
+  onEmailPasswordResendVerification,
+  onPasswordReset,
   firebaseConfigured,
   missingFirebaseEnvVariables,
   isLoading,
   error,
+  success,
 }) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(null);
-  const [authMode, setAuthMode] = useState<'sign-in' | 'register'>('sign-in');
+  const [authMode, setAuthMode] = useState<'sign-in' | 'register' | 'reset'>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -113,6 +119,8 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
     event.preventDefault();
     if (authMode === 'register') {
       onEmailPasswordRegister(email, password);
+    } else if (authMode === 'reset') {
+      onPasswordReset(email);
     } else {
       onEmailPasswordSignIn(email, password);
     }
@@ -199,10 +207,18 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
                   <Focus className="h-5 w-5" />
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight text-white">
-                  Welcome back
+                  {authMode === 'register'
+                    ? 'Create your account'
+                    : authMode === 'reset'
+                      ? 'Reset your password'
+                      : 'Welcome back'}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Sign in to your space and pick up where you left off.
+                  {authMode === 'register'
+                    ? 'Create an account to save your workspace.'
+                    : authMode === 'reset'
+                      ? 'We’ll email you a secure link to choose a new password.'
+                      : 'Sign in to your space and pick up where you left off.'}
                 </p>
               </div>
 
@@ -254,20 +270,22 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
                     value={email}
                   />
                 </label>
-                <label className="block text-xs font-medium text-slate-300">
-                  Password
-                  <input
-                    autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
-                    className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
-                    disabled={!firebaseConfigured || isLoading}
-                    minLength={authMode === 'register' ? 6 : undefined}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder="At least 6 characters"
-                    required
-                    type="password"
-                    value={password}
-                  />
-                </label>
+                {authMode !== 'reset' && (
+                  <label className="block text-xs font-medium text-slate-300">
+                    Password
+                    <input
+                      autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+                      className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
+                      disabled={!firebaseConfigured || isLoading}
+                      minLength={authMode === 'register' ? 6 : undefined}
+                      onChange={(event) => setPassword(event.target.value)}
+                      placeholder="At least 6 characters"
+                      required
+                      type="password"
+                      value={password}
+                    />
+                  </label>
+                )}
                 <button
                   className="w-full rounded-xl bg-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-300/60 disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={!firebaseConfigured || !acceptedTerms || isLoading}
@@ -277,39 +295,75 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
                     ? 'Connecting…'
                     : authMode === 'register'
                       ? 'Create account'
-                      : 'Sign in with email'}
+                      : authMode === 'reset'
+                        ? 'Send password reset email'
+                        : 'Sign in with email'}
                 </button>
               </form>
 
               <p className="mt-3 text-center text-xs text-slate-500">
-                {authMode === 'register' ? 'Already registered?' : 'New to Self-Monitor?'}{' '}
+                {authMode === 'register'
+                  ? 'Already registered?'
+                  : authMode === 'reset'
+                    ? 'Remembered your password?'
+                    : 'New to Self-Monitor?'}{' '}
                 <button
                   className="font-medium text-indigo-300 hover:text-indigo-200"
                   disabled={isLoading}
                   onClick={() =>
-                    setAuthMode((mode) => (mode === 'register' ? 'sign-in' : 'register'))
+                    setAuthMode((mode) =>
+                      mode === 'register' || mode === 'reset' ? 'sign-in' : 'register'
+                    )
                   }
                   type="button"
                 >
-                  {authMode === 'register' ? 'Sign in' : 'Create an account'}
+                  {authMode === 'register' || authMode === 'reset' ? 'Sign in' : 'Create an account'}
                 </button>
               </p>
 
-              <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-slate-600">
-                <span className="h-px flex-1 bg-white/[0.08]" />
-                or
-                <span className="h-px flex-1 bg-white/[0.08]" />
-              </div>
+              {authMode === 'sign-in' && (
+                <div className="mt-3 text-center">
+                  <button
+                    className="text-xs font-medium text-indigo-300 hover:text-indigo-200"
+                    disabled={isLoading}
+                    onClick={() => setAuthMode('reset')}
+                    type="button"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
 
-              <button
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-white/20 hover:bg-white/[0.075] focus:outline-none focus:ring-2 focus:ring-indigo-400/60 disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={!firebaseConfigured || !acceptedTerms || isLoading}
-                onClick={onGoogleSignIn}
-                type="button"
-              >
-                <GoogleMark />
-                {isLoading ? 'Connecting…' : 'Continue with Google'}
-              </button>
+              {authMode !== 'reset' && (
+                <>
+                  <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-slate-600">
+                    <span className="h-px flex-1 bg-white/[0.08]" />
+                    or
+                    <span className="h-px flex-1 bg-white/[0.08]" />
+                  </div>
+
+                  <button
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-white/20 hover:bg-white/[0.075] focus:outline-none focus:ring-2 focus:ring-indigo-400/60 disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={!firebaseConfigured || !acceptedTerms || isLoading}
+                    onClick={onGoogleSignIn}
+                    type="button"
+                  >
+                    <GoogleMark />
+                    {isLoading ? 'Connecting…' : 'Continue with Google'}
+                  </button>
+                </>
+              )}
+
+              {authMode === 'sign-in' && (
+                <button
+                  className="mt-3 w-full text-center text-xs font-medium text-indigo-300 hover:text-indigo-200 disabled:opacity-40"
+                  disabled={!firebaseConfigured || !email || !password || isLoading}
+                  onClick={() => onEmailPasswordResendVerification(email, password)}
+                  type="button"
+                >
+                  Resend verification email
+                </button>
+              )}
 
               {!firebaseConfigured && (
                 <p className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[0.06] px-3.5 py-3 text-xs leading-5 text-amber-100/80">
@@ -329,6 +383,15 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({
                   role="alert"
                 >
                   {error}
+                </p>
+              )}
+              {success && (
+                <p
+                  aria-live="polite"
+                  className="mt-4 rounded-xl border border-emerald-300/15 bg-emerald-300/[0.06] px-3.5 py-3 text-xs leading-5 text-emerald-100/90"
+                  role="status"
+                >
+                  {success}
                 </p>
               )}
 

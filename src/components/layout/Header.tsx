@@ -12,8 +12,9 @@ import {
   Timer,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { TaskNotificationCenter } from './TaskNotificationCenter';
 
-export const Header: React.FC = () => {
+export const Header: React.FC<{ userId: string }> = ({ userId }) => {
   const {
     activeWindow,
     setActiveWindow,
@@ -61,6 +62,7 @@ export const Header: React.FC = () => {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <TaskNotificationCenter userId={userId} />
         {activeWindow === 'tasks' && (
           <label className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
