@@ -10,6 +10,7 @@ import { TaskCommandCenter } from './components/tasks/TaskCommandCenter';
 import { DynamicWorkspace } from './components/workspace/DynamicWorkspace';
 import { SmartScheduler } from './components/scheduler/SmartScheduler';
 import { AnalyticsDashboard } from './components/analytics/AnalyticsDashboard';
+import { ProfilePage } from './components/profile/ProfilePage';
 import { WelcomePage } from './components/auth/WelcomePage';
 import {
   auth,
@@ -22,6 +23,7 @@ import {
   signInWithEmail,
   signInWithGoogle,
   signOut,
+  updateUserDisplayName,
 } from './lib/firebase';
 import {
   clearLegacyAppData,
@@ -39,6 +41,7 @@ const getCurrentAppData = (): AppDataSnapshot => {
 
 export const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [accountDisplayName, setAccountDisplayName] = useState('');
   const [authReady, setAuthReady] = useState(false);
   const [appDataReady, setAppDataReady] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -89,6 +92,7 @@ export const App: React.FC = () => {
         setAuthError(null);
         setAuthSuccess(null);
         setUser(nextUser);
+        setAccountDisplayName(nextUser?.displayName || '');
         setAuthReady(true);
       },
       (error) => {
@@ -299,6 +303,17 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleDisplayNameUpdate = async (displayName: string) => {
+    if (!user) return;
+    await updateUserDisplayName(user, displayName);
+    setAccountDisplayName(displayName);
+  };
+
+  const handleProfilePasswordReset = async () => {
+    if (!user?.email) throw new Error('This account does not have an email address.');
+    await sendPasswordReset(user.email);
+  };
+
   if (!authReady) {
     return <LoadingScreen message="Connecting to Firebase…" />;
   }
@@ -333,7 +348,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-shell flex min-h-screen bg-dark-950 font-sans text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
-      <Sidebar onSignOut={handleSignOut} userName={user.displayName || user.email || 'Firebase user'} />
+      <Sidebar onSignOut={handleSignOut} userName={accountDisplayName || user.email || 'Firebase user'} />
 
       <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-y-auto">
         {(syncError || authError) && (
@@ -354,6 +369,16 @@ export const App: React.FC = () => {
           {activeWindow === 'workspace' && <DynamicWorkspace />}
           {activeWindow === 'scheduler' && <SmartScheduler />}
           {activeWindow === 'analytics' && <AnalyticsDashboard />}
+          {activeWindow === 'profile' && (
+            <ProfilePage
+              displayName={accountDisplayName}
+              onDisplayNameUpdate={handleDisplayNameUpdate}
+              onExportData={() => useAppStore.getState().setExportModalOpen(true)}
+              onPasswordReset={handleProfilePasswordReset}
+              onSignOut={handleSignOut}
+              user={user}
+            />
+          )}
         </main>
       </div>
 

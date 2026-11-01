@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Search,
   Timer,
+  UserRound,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { TaskNotificationCenter } from './TaskNotificationCenter';
@@ -34,6 +35,7 @@ export const Header: React.FC<{ userId: string }> = ({ userId }) => {
     workspace: { title: 'Workspace', icon: Cpu },
     scheduler: { title: 'Focus & plan', icon: CalendarDays },
     analytics: { title: 'Your progress', icon: BarChart3 },
+    profile: { title: 'Your profile', icon: UserRound },
   }[activeWindow];
   const Icon = windowInfo.icon;
   const formattedPomodoro = `${String(Math.floor(pomodoro.timeLeft / 60)).padStart(

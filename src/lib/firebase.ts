@@ -8,8 +8,9 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
+  updateProfile,
 } from 'firebase/auth';
-import type { Auth } from 'firebase/auth';
+import type { Auth, User } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
@@ -96,6 +97,10 @@ export async function resendEmailVerification(email: string, password: string): 
 export async function sendPasswordReset(email: string): Promise<void> {
   if (!auth) throw new Error('Firebase is not configured. Add the Firebase settings and restart the app.');
   await sendPasswordResetEmail(auth, email);
+}
+
+export async function updateUserDisplayName(user: User, displayName: string): Promise<void> {
+  await updateProfile(user, { displayName });
 }
 
 export async function signOut(): Promise<void> {
