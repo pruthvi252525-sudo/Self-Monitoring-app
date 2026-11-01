@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
   Plus,
   Sparkles,
+  UserRound,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { AppWindow } from '../../types';
@@ -28,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
     setExportModalOpen,
   } = useAppStore();
   const [moreOpen, setMoreOpen] = useState(
-    activeWindow === 'workspace' || activeWindow === 'analytics'
+    activeWindow === 'workspace' || activeWindow === 'analytics' || activeWindow === 'profile'
   );
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const openTasks = tasks.filter((task) => task.status !== 'completed').length;
@@ -49,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
   }[] = [
     { id: 'workspace', label: 'Workspace', icon: Cpu },
     { id: 'analytics', label: 'Insights', icon: BarChart3 },
+    { id: 'profile', label: 'Profile', icon: UserRound },
   ];
 
   const renderNavigationItem = (item: (typeof primaryItems)[number]) => {
@@ -171,31 +173,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
       </aside>
 
       <nav aria-label="Mobile navigation" className="mobile-bottom-nav sm:hidden">
-        {[primaryItems[0], primaryItems[1], ...moreItems].map((item) => {
-          const Icon = item.icon;
-          const isActive = activeWindow === item.id;
-          const mobileLabel = {
-            tasks: 'Tasks',
-            scheduler: 'Focus',
-            workspace: 'Space',
-            analytics: 'Stats',
-          }[item.id];
-          return (
-            <button
-              aria-current={isActive ? 'page' : undefined}
-              aria-label={item.label}
-              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl py-1 text-[10px] ${
-                isActive ? 'text-indigo-200' : 'text-slate-500'
-              }`}
-              key={item.id}
-              onClick={() => setActiveWindow(item.id)}
-              type="button"
-            >
-              <Icon className={`h-5 w-5 ${isActive ? 'text-indigo-300' : ''}`} />
-              <span className="truncate">{mobileLabel}</span>
-            </button>
-          );
-        })}
+        {[primaryItems[0], primaryItems[1], ...moreItems.filter((item) => item.id !== 'profile')].map(
+          (item) => {
+            const Icon = item.icon;
+            const isActive = activeWindow === item.id;
+            const mobileLabel = {
+              tasks: 'Tasks',
+              scheduler: 'Focus',
+              workspace: 'Space',
+              analytics: 'Stats',
+              profile: 'Profile',
+            }[item.id];
+            return (
+              <button
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl py-1 text-[10px] ${
+                  isActive ? 'text-indigo-200' : 'text-slate-500'
+                }`}
+                key={item.id}
+                onClick={() => setActiveWindow(item.id)}
+                type="button"
+              >
+                <Icon className={`h-5 w-5 ${isActive ? 'text-indigo-300' : ''}`} />
+                <span className="truncate">{mobileLabel}</span>
+              </button>
+            );
+          }
+        )}
         <button
           aria-label="Create a task"
           className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl py-1 text-[10px] text-slate-500"
@@ -213,6 +218,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
             <p className="truncate px-2 py-2 text-xs text-slate-500" title={userName}>
               Signed in as {userName}
             </p>
+            <button
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-2.5 text-left text-xs text-slate-300 hover:bg-white/[0.06]"
+              onClick={() => {
+                setMobileMoreOpen(false);
+                setActiveWindow('profile');
+              }}
+              type="button"
+            >
+              <UserRound className="h-4 w-4" />
+              My profile
+            </button>
             <button
               className="flex w-full items-center gap-2 rounded-xl px-2 py-2.5 text-left text-xs text-slate-300 hover:bg-white/[0.06]"
               onClick={() => {
