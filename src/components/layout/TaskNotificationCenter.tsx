@@ -164,7 +164,7 @@ export const TaskNotificationCenter: React.FC<TaskNotificationCenterProps> = ({ 
   };
 
   return (
-    <div className="relative">
+    <div className="notification-center relative">
       <button
         aria-expanded={isOpen}
         aria-label={unreadCount > 0 ? `${unreadCount} new notifications` : 'Notifications'}
@@ -189,7 +189,7 @@ export const TaskNotificationCenter: React.FC<TaskNotificationCenterProps> = ({ 
       {isOpen && (
         <section
           aria-label="Task notifications"
-          className="absolute right-0 top-12 z-40 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#171821] shadow-2xl shadow-black/40"
+          className="notification-panel absolute right-0 top-12 z-40 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#171821] shadow-2xl shadow-black/40"
         >
           <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
             <div>
