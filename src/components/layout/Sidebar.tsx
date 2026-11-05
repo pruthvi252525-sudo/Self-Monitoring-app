@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   BarChart3,
   CheckSquare,
-  ChevronDown,
   Cpu,
   Download,
   Focus,
@@ -28,9 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
     setQuickTaskModalOpen,
     setExportModalOpen,
   } = useAppStore();
-  const [moreOpen, setMoreOpen] = useState(
-    activeWindow === 'workspace' || activeWindow === 'analytics' || activeWindow === 'profile'
-  );
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const openTasks = tasks.filter((task) => task.status !== 'completed').length;
 
@@ -114,27 +110,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
             Your space
           </p>
           {primaryItems.map(renderNavigationItem)}
-
-          <div className="relative pt-1">
-            <button
-              aria-expanded={moreOpen}
-              className="sidebar-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-400 transition hover:bg-white/[0.045] hover:text-slate-100"
-              onClick={() => setMoreOpen((open) => !open)}
-              title="More sections"
-              type="button"
-            >
-              <ChevronDown
-                className={`h-[18px] w-[18px] shrink-0 transition-transform ${moreOpen ? 'rotate-180' : ''}`}
-              />
-              <span className="sidebar-label flex-1">More</span>
-            </button>
-            {moreOpen && (
-              <div className="mt-1 space-y-1 pl-2">
-                {moreItems.map((item) => (
-                  <React.Fragment key={item.id}>{renderNavigationItem(item)}</React.Fragment>
-                ))}
-              </div>
-            )}
+          <div className="space-y-1 pt-1">
+            {moreItems.map((item) => (
+              <React.Fragment key={item.id}>{renderNavigationItem(item)}</React.Fragment>
+            ))}
           </div>
         </nav>
 
