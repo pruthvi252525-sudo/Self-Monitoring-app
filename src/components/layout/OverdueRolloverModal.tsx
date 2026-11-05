@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from '../common/Modal';
 import { PriorityBadge, CategoryBadge } from '../common/Badge';
 import { useAppStore } from '../../store/useAppStore';
-import { RotateCcw, Calendar, Check, ArrowRight } from 'lucide-react';
+import { RotateCcw, Calendar, Check, CheckCircle2, ArrowRight } from 'lucide-react';
 import { formatDeadlineRemaining, getTodayDateString } from '../../utils/dateUtils';
 
 export const OverdueRolloverModal: React.FC = () => {
@@ -18,9 +18,13 @@ export const OverdueRolloverModal: React.FC = () => {
   const [customDates, setCustomDates] = useState<Record<string, string>>({});
   const [handledTaskIds, setHandledTaskIds] = useState<string[]>([]);
   const [exitingTaskIds, setExitingTaskIds] = useState<string[]>([]);
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    if (rolloverModalOpen) setHandledTaskIds([]);
+    if (rolloverModalOpen) {
+      setHandledTaskIds([]);
+      setActionFeedback(null);
+    }
   }, [rolloverModalOpen]);
 
   const now = Date.now();
@@ -51,21 +55,42 @@ export const OverdueRolloverModal: React.FC = () => {
 
   const handleDone = (taskId: string) => {
     animateTaskOut(taskId, () => toggleTaskStatus(taskId));
+    setActionFeedback('Task marked as done.');
   };
 
   const handleRollover = (taskId: string) => {
     animateTaskOut(taskId, () => rolloverTaskToToday(taskId));
+    const task = tasks.find((item) => item.id === taskId);
+    setActionFeedback(
+      task
+        ? `“${task.title}” rolled over to today. Its new deadline is 9:00 PM.`
+        : 'Task rolled over to today. Its new deadline is 9:00 PM.'
+    );
   };
 
   const handleReschedule = (taskId: string) => {
     const newDate = customDates[taskId];
     if (!newDate) return;
     animateTaskOut(taskId, () => rescheduleTask(taskId, newDate));
+    setActionFeedback('Task rescheduled successfully.');
   };
 
   const handleRolloverAll = () => {
-    overdueTasks.forEach((task) => rolloverTaskToToday(task.id));
-    setRolloverModalOpen(false);
+    const tasksToRollover = overdueTasks.filter((task) => !exitingTaskIds.includes(task.id));
+    if (tasksToRollover.length === 0) return;
+
+    const taskIds = tasksToRollover.map((task) => task.id);
+    setHandledTaskIds((ids) => [...new Set([...ids, ...taskIds])]);
+    setExitingTaskIds((ids) => [...new Set([...ids, ...taskIds])]);
+    tasksToRollover.forEach((task) => rolloverTaskToToday(task.id));
+    setActionFeedback(
+      `${tasksToRollover.length} ${
+        tasksToRollover.length === 1 ? 'task' : 'tasks'
+      } rolled over to today. Deadlines are set for 9:00 PM.`
+    );
+    window.setTimeout(() => {
+      setExitingTaskIds((ids) => ids.filter((id) => !taskIds.includes(id)));
+    }, 220);
   };
 
   return (
@@ -84,6 +109,17 @@ export const OverdueRolloverModal: React.FC = () => {
             Adjust estimates, rollover to today's schedule, or adjust deadlines to preserve your productivity momentum.
           </p>
         </div>
+
+        {actionFeedback && (
+          <div
+            aria-live="polite"
+            className="flex items-start gap-2.5 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.08] p-3.5 text-sm text-emerald-100"
+            role="status"
+          >
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+            <p>{actionFeedback}</p>
+          </div>
+        )}
 
         {overdueTasks.length === 0 ? (
           <div className="py-8 text-center text-slate-400 text-sm">
