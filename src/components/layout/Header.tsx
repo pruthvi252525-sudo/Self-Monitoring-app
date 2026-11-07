@@ -32,6 +32,7 @@ export const Header: React.FC<{ userId: string }> = ({ userId }) => {
   const overdueTasks = checkAndPromptOverdueTasks();
   const windowInfo = {
     tasks: { title: 'My tasks', icon: CheckSquare },
+    calendar: { title: 'Calendar', icon: CalendarDays },
     workspace: { title: 'Workspace', icon: Cpu },
     scheduler: { title: 'Focus & plan', icon: CalendarDays },
     analytics: { title: 'Your progress', icon: BarChart3 },

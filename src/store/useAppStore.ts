@@ -166,9 +166,17 @@ export const useAppStore = create<AppState>()(
 
       updateTask: (id, updates) => {
         set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, ...updates } : task
-          ),
+          tasks: state.tasks.map((task) => {
+            if (task.id !== id) return task;
+            const updatedTask = { ...task, ...updates };
+            if (
+              Object.prototype.hasOwnProperty.call(updates, 'reminderMinutesBefore') &&
+              updates.reminderMinutesBefore === undefined
+            ) {
+              delete updatedTask.reminderMinutesBefore;
+            }
+            return updatedTask;
+          }),
         }));
       },
 

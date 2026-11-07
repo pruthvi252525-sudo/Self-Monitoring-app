@@ -11,6 +11,7 @@ import { DynamicWorkspace } from './components/workspace/DynamicWorkspace';
 import { SmartScheduler } from './components/scheduler/SmartScheduler';
 import { AnalyticsDashboard } from './components/analytics/AnalyticsDashboard';
 import { ProfilePage } from './components/profile/ProfilePage';
+import { CreativeCalendar } from './components/calendar/CreativeCalendar';
 import { WelcomePage } from './components/auth/WelcomePage';
 import {
   auth,
@@ -208,6 +209,8 @@ export const App: React.FC = () => {
         setActiveWindow('scheduler');
       } else if (event.key === '4') {
         setActiveWindow('analytics');
+      } else if (event.key === '5') {
+        setActiveWindow('calendar');
       }
     };
 
@@ -368,6 +371,7 @@ export const App: React.FC = () => {
           {activeWindow === 'tasks' && <TaskCommandCenter />}
           {activeWindow === 'workspace' && <DynamicWorkspace />}
           {activeWindow === 'scheduler' && <SmartScheduler />}
+          {activeWindow === 'calendar' && <CreativeCalendar />}
           {activeWindow === 'analytics' && <AnalyticsDashboard />}
           {activeWindow === 'profile' && (
             <ProfilePage
