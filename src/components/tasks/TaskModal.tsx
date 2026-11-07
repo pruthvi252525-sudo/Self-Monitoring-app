@@ -9,12 +9,21 @@ interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   taskToEdit?: Task | null;
+  initialDate?: string;
 }
+
+const toLocalDateTimeInputValue = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localDate.toISOString().slice(0, 16);
+};
 
 export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   onClose,
   taskToEdit,
+  initialDate,
 }) => {
   const { addTask, updateTask } = useAppStore();
 
@@ -24,6 +33,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [priority, setPriority] = useState<TaskPriority>('P2');
   const [estimatedDuration, setEstimatedDuration] = useState(60);
   const [deadline, setDeadline] = useState('');
+  const [reminder, setReminder] = useState('auto');
 
   useEffect(() => {
     if (taskToEdit) {
@@ -34,8 +44,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setEstimatedDuration(taskToEdit.estimatedDuration);
       setDeadline(
         taskToEdit.deadline
-          ? taskToEdit.deadline.slice(0, 16)
+          ? toLocalDateTimeInputValue(taskToEdit.deadline)
           : `${getTodayDateString()}T18:00`
+      );
+      setReminder(
+        taskToEdit.reminderMinutesBefore === undefined
+          ? 'auto'
+          : taskToEdit.reminderMinutesBefore === null
+            ? 'none'
+            : String(taskToEdit.reminderMinutesBefore)
       );
     } else {
       setTitle('');
@@ -43,9 +60,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setCategory('Academic');
       setPriority('P2');
       setEstimatedDuration(60);
-      setDeadline(`${getTodayDateString()}T18:00`);
+      setDeadline(`${initialDate || getTodayDateString()}T18:00`);
+      setReminder('auto');
     }
-  }, [taskToEdit, isOpen]);
+  }, [taskToEdit, isOpen, initialDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +77,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         priority,
         estimatedDuration: Number(estimatedDuration),
         deadline: deadline ? new Date(deadline).toISOString() : '',
+        reminderMinutesBefore: reminder === 'auto' ? undefined : reminder === 'none' ? null : Number(reminder),
       });
     } else {
       addTask({
@@ -68,6 +87,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         priority,
         estimatedDuration: Number(estimatedDuration),
         deadline: deadline ? new Date(deadline).toISOString() : '',
+        ...(reminder === 'auto'
+          ? {}
+          : { reminderMinutesBefore: reminder === 'none' ? null : Number(reminder) }),
         status: 'todo',
       });
     }
@@ -99,6 +121,26 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             onChange={(e) => setTitle(e.target.value)}
             className="w-full bg-dark-800 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-slate-300">
+            Reminder
+          </label>
+          <select
+            value={reminder}
+            onChange={(event) => setReminder(event.target.value)}
+            className="w-full rounded-xl border border-slate-700/80 bg-dark-800 px-3.5 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+          >
+            <option value="auto">Automatic deadline reminders</option>
+            <option value="1440">1 day before</option>
+            <option value="60">1 hour before</option>
+            <option value="15">15 minutes before</option>
+            <option value="none">No reminder</option>
+          </select>
+          <p className="mt-1 text-[11px] leading-4 text-slate-500">
+            Alerts appear in the app and, with browser permission, as notifications while the app is open.
+          </p>
         </div>
 
         {/* Description */}
@@ -222,4 +264,3 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     </Modal>
   );
 };
-

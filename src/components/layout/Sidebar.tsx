@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   BarChart3,
+  CalendarDays,
   CheckSquare,
   Cpu,
   Download,
@@ -36,6 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
     icon: React.ComponentType<{ className?: string }>;
   }[] = [
     { id: 'tasks', label: 'My tasks', icon: CheckSquare },
+    { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     { id: 'scheduler', label: 'Focus & plan', icon: Focus },
   ];
 
@@ -152,12 +154,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
       </aside>
 
       <nav aria-label="Mobile navigation" className="mobile-bottom-nav sm:hidden">
-        {[primaryItems[0], primaryItems[1], ...moreItems.filter((item) => item.id !== 'profile')].map(
+        {[primaryItems[0], primaryItems[1], primaryItems[2], moreItems.find((item) => item.id === 'analytics')!].map(
           (item) => {
             const Icon = item.icon;
             const isActive = activeWindow === item.id;
             const mobileLabel = {
               tasks: 'Tasks',
+              calendar: 'Calendar',
               scheduler: 'Focus',
               workspace: 'Space',
               analytics: 'Stats',
@@ -197,6 +200,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignOut, userName }) => {
             <p className="truncate px-2 py-2 text-xs text-slate-500" title={userName}>
               Signed in as {userName}
             </p>
+            <button
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-2.5 text-left text-xs text-slate-300 hover:bg-white/[0.06]"
+              onClick={() => {
+                setMobileMoreOpen(false);
+                setActiveWindow('workspace');
+              }}
+              type="button"
+            >
+              <Cpu className="h-4 w-4" />
+              Workspace
+            </button>
             <button
               className="flex w-full items-center gap-2 rounded-xl px-2 py-2.5 text-left text-xs text-slate-300 hover:bg-white/[0.06]"
               onClick={() => {

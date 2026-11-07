@@ -38,6 +38,7 @@ export interface Task {
   estimatedDuration: number; // in minutes
   actualDuration?: number; // in minutes logged
   deadline: string; // ISO 8601 string
+  reminderMinutesBefore?: number | null;
   status: TaskStatus;
   createdAt: string;
   completedAt?: string;
@@ -47,4 +48,3 @@ export interface Task {
   assets: WorkspaceAsset[];
   order?: number;
 }
-

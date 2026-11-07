@@ -86,13 +86,30 @@ export const TaskNotificationCenter: React.FC<TaskNotificationCenterProps> = ({ 
         const deadline = new Date(task.deadline).getTime();
         if (!Number.isFinite(deadline)) return;
 
-        const reminder = deadline <= now
-          ? { key: 'overdue', message: 'This task is past its deadline.' }
-          : deadline - now <= hour
-            ? { key: 'one-hour', message: 'This task is due within the next hour.' }
-            : deadline - now <= day
-              ? { key: 'one-day', message: 'This task is due within the next 24 hours.' }
-              : null;
+        const remaining = deadline - now;
+        const configuredReminder = task.reminderMinutesBefore;
+        const reminder = configuredReminder === null
+          ? null
+          : remaining <= 0
+            ? { key: 'overdue', message: 'This task is past its deadline.' }
+            : configuredReminder !== undefined
+              ? remaining <= configuredReminder * 60_000
+                ? {
+                    key: `custom-${configuredReminder}`,
+                    message: configuredReminder === 0
+                      ? 'This task is due now.'
+                      : `This task is due in ${configuredReminder >= 1440
+                        ? `${configuredReminder / 1440} day${configuredReminder === 1440 ? '' : 's'}`
+                        : configuredReminder >= 60
+                          ? `${configuredReminder / 60} hour${configuredReminder === 60 ? '' : 's'}`
+                          : `${configuredReminder} minutes`}.`,
+                  }
+                : null
+              : remaining <= hour
+                ? { key: 'one-hour', message: 'This task is due within the next hour.' }
+                : remaining <= day
+                  ? { key: 'one-day', message: 'This task is due within the next 24 hours.' }
+                  : null;
         if (!reminder) return;
 
         const key = `self-monitor:reminder:${userId}:${task.id}:${task.deadline}:${reminder.key}`;

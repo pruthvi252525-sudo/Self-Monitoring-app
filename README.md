@@ -66,6 +66,7 @@ src/
 ## App sections
 
 - **Tasks:** Create and organize tasks in list, Kanban, or Eisenhower views.
+- **Calendar:** View task deadlines by month, add tasks to a selected date, and configure in-app/browser deadline reminders.
 - **Workspace:** Keep notes, links, checklists, and attachments with each task.
 - **Scheduler:** Plan time blocks and track focus with the Pomodoro timer.
 - **Analytics:** Review task progress and focus metrics; export reports and backups.
