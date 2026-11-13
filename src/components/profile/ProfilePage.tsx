@@ -230,7 +230,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             type="button"
           >
             {isInstalled ? <CheckCircle2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
-            {isInstalled ? 'App installed' : installPrompt ? 'Install app' : 'How to install'}
+            {isInstalled ? 'App installed' : 'Download app'}
           </button>
         </div>
         {showInstallInstructions && !isInstalled && (
