@@ -79,7 +79,7 @@ export const Header: React.FC<{ userId: string }> = ({ userId }) => {
           </label>
         )}
 
-        <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-2 py-1.5">
+        <div className="header-focus-controls flex items-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.035] px-2 py-1.5">
           <button
             aria-label="Open focus timer"
             className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-xs font-medium text-slate-300 transition hover:text-white"
@@ -88,7 +88,7 @@ export const Header: React.FC<{ userId: string }> = ({ userId }) => {
             type="button"
           >
             <Timer className={`h-4 w-4 ${pomodoro.isRunning ? 'text-indigo-300' : 'text-slate-500'}`} />
-            <span className="font-mono tabular-nums">{formattedPomodoro}</span>
+            <span className="header-pomodoro-time font-mono tabular-nums">{formattedPomodoro}</span>
           </button>
           <span className="h-4 w-px bg-white/[0.09]" />
           <button

@@ -17,41 +17,39 @@ interface TaskNotificationCenterProps {
 
 export const TaskNotificationCenter: React.FC<TaskNotificationCenterProps> = ({ userId }) => {
   const [notifications, setNotifications] = useState<TaskNotification[]>([]);
+  const [toasts, setToasts] = useState<TaskNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() =>
-    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
-  );
-  const [browserError, setBrowserError] = useState<string | null>(null);
   const seenReminders = useRef(new Set<string>());
+  const toastTimers = useRef(new Map<string, number>());
   const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   const publish = useCallback(
     (id: string, title: string, message: string) => {
+      const notification = { id, title, message, createdAt: Date.now(), read: false };
       setNotifications((current) => [
-        { id, title, message, createdAt: Date.now(), read: false },
+        notification,
         ...current.filter((notification) => notification.id !== id),
       ].slice(0, 20));
 
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        try {
-          const browserNotification = new Notification(title, { body: message, tag: id });
-          browserNotification.onclick = () => {
-            window.focus();
-            useAppStore.getState().setActiveWindow('tasks');
-            setIsOpen(true);
-            browserNotification.close();
-          };
-        } catch (error) {
-          setBrowserError(
-            error instanceof Error
-              ? `Browser alert failed: ${error.message}`
-              : 'Browser alert could not be displayed.'
-          );
-        }
-      }
+      const existingTimer = toastTimers.current.get(id);
+      if (existingTimer !== undefined) window.clearTimeout(existingTimer);
+      setToasts((current) => [
+        notification,
+        ...current.filter((toast) => toast.id !== id),
+      ].slice(0, 3));
+      const timer = window.setTimeout(() => {
+        setToasts((current) => current.filter((toast) => toast.id !== id));
+        toastTimers.current.delete(id);
+      }, 6000);
+      toastTimers.current.set(id, timer);
     },
     []
   );
+
+  useEffect(() => () => {
+    toastTimers.current.forEach((timer) => window.clearTimeout(timer));
+    toastTimers.current.clear();
+  }, []);
 
   useEffect(() => {
     const isReminderSeen = (key: string) => {
@@ -163,51 +161,42 @@ export const TaskNotificationCenter: React.FC<TaskNotificationCenterProps> = ({ 
     };
   }, [publish, userId]);
 
-  const enableBrowserAlerts = async () => {
-    setBrowserError(null);
-    if (typeof Notification === 'undefined') {
-      setPermission('unsupported');
-      return;
-    }
-    try {
-      setPermission(await Notification.requestPermission());
-    } catch (error) {
-      setBrowserError(
-        error instanceof Error
-          ? `Could not enable browser alerts: ${error.message}`
-          : 'Could not enable browser alerts.'
-      );
-    }
+  const dismissToast = (id: string) => {
+    const timer = toastTimers.current.get(id);
+    if (timer !== undefined) window.clearTimeout(timer);
+    toastTimers.current.delete(id);
+    setToasts((current) => current.filter((toast) => toast.id !== id));
   };
 
   return (
-    <div className="notification-center relative">
-      <button
-        aria-expanded={isOpen}
-        aria-label={unreadCount > 0 ? `${unreadCount} new notifications` : 'Notifications'}
-        className="relative rounded-xl border border-white/[0.07] bg-white/[0.035] p-2 text-slate-300 transition hover:bg-white/[0.07] hover:text-white"
-        onClick={() => {
-          setIsOpen((open) => !open);
-          setNotifications((current) =>
-            current.map((notification) => ({ ...notification, read: true }))
-          );
-        }}
-        title="Notifications"
-        type="button"
-      >
-        {permission === 'granted' ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-500 px-1 text-[9px] font-bold text-white">
-            {unreadCount}
-          </span>
-        )}
-      </button>
-
-      {isOpen && (
-        <section
-          aria-label="Task notifications"
-          className="notification-panel absolute right-0 top-12 z-40 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#171821] shadow-2xl shadow-black/40"
+    <>
+      <div className="notification-center relative">
+        <button
+          aria-expanded={isOpen}
+          aria-label={unreadCount > 0 ? `${unreadCount} new notifications` : 'Notifications'}
+          className="relative flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035] text-slate-300 transition hover:bg-white/[0.07] hover:text-white"
+          onClick={() => {
+            setIsOpen((open) => !open);
+            setNotifications((current) =>
+              current.map((notification) => ({ ...notification, read: true }))
+            );
+          }}
+          title="Notifications"
+          type="button"
         >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-500 px-1 text-[9px] font-bold text-white">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+
+        {isOpen && (
+          <section
+            aria-label="Task notifications"
+            className="notification-panel absolute right-0 top-12 z-40 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#171821] shadow-2xl shadow-black/40"
+          >
           <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-100">Notifications</h3>
@@ -256,36 +245,48 @@ export const TaskNotificationCenter: React.FC<TaskNotificationCenterProps> = ({ 
           </div>
 
           <div className="border-t border-white/[0.07] px-4 py-3">
-            {permission === 'granted' ? (
-              <p className="text-[11px] text-emerald-300">Browser alerts are enabled.</p>
-            ) : permission === 'denied' ? (
-              <p className="text-[11px] leading-4 text-amber-200">
-                Browser alerts are blocked. Allow them in your browser’s site settings.
-              </p>
-            ) : permission === 'unsupported' ? (
-              <p className="text-[11px] leading-4 text-slate-500">
-                Browser alerts aren’t supported here; in-app alerts still work.
-              </p>
-            ) : (
+            <p className="mt-2 text-[10px] leading-4 text-slate-600">
+              In-app alerts appear while the app is open. They won’t arrive after you close it.
+            </p>
+          </div>
+          </section>
+        )}
+      </div>
+      {toasts.length > 0 && (
+        <div aria-live="polite" className="notification-toasts" role="region">
+          {toasts.map((toast) => (
+            <div className="notification-toast" key={toast.id} role="status">
+              <span className="mt-0.5 shrink-0 text-indigo-300">
+                {toast.title === 'Task deadline'
+                  ? <Clock3 className="h-4 w-4" />
+                  : <CheckCheck className="h-4 w-4" />}
+              </span>
               <button
-                className="text-xs font-medium text-indigo-300 hover:text-indigo-200"
-                onClick={() => void enableBrowserAlerts()}
+                className="min-w-0 flex-1 text-left"
+                onClick={() => {
+                  useAppStore.getState().setActiveWindow('tasks');
+                  setIsOpen(true);
+                  dismissToast(toast.id);
+                }}
                 type="button"
               >
-                Enable browser alerts
+                <span className="block text-xs font-semibold text-slate-100">{toast.title}</span>
+                <span className="mt-1 block break-words text-xs leading-5 text-slate-400">
+                  {toast.message}
+                </span>
               </button>
-            )}
-            <p className="mt-2 text-[10px] leading-4 text-slate-600">
-              Deadline checks run while the app is open. Alerts cannot arrive after you close it.
-            </p>
-            {browserError && (
-              <p aria-live="polite" className="mt-2 text-[11px] leading-4 text-amber-200" role="alert">
-                {browserError}
-              </p>
-            )}
-          </div>
-        </section>
+              <button
+                aria-label={`Dismiss ${toast.title} notification`}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white/[0.07] hover:text-white"
+                onClick={() => dismissToast(toast.id)}
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
       )}
-    </div>
+    </>
   );
 };
