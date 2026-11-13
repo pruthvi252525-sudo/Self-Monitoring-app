@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowDownToLine,
   CalendarDays,
   Check,
   CheckCircle2,
   Clock3,
+  Download,
+  Share,
   KeyRound,
   Mail,
+  MoreVertical,
   Pencil,
   ShieldCheck,
+  Smartphone,
   UserRound,
   X,
 } from 'lucide-react';
@@ -23,6 +27,11 @@ interface ProfilePageProps {
   onPasswordReset: () => Promise<void>;
   onExportData: () => void;
   onSignOut: () => void;
+}
+
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({
@@ -40,6 +49,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallInstructions, setShowInstallInstructions] = useState(false);
+  const [installError, setInstallError] = useState<string | null>(null);
   const completedTasks = tasks.filter((task) => task.status === 'completed').length;
   const activeTasks = tasks.filter((task) => task.status !== 'completed').length;
   const completionRate = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0;
@@ -63,6 +76,51 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         year: 'numeric',
       })
     : 'Not available';
+
+  useEffect(() => {
+    const displayMode = window.matchMedia('(display-mode: standalone)');
+    const isStandalone = () =>
+      displayMode.matches ||
+      ('standalone' in window.navigator &&
+        (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
+    const handleInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    };
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+      setShowInstallInstructions(false);
+    };
+
+    setIsInstalled(isStandalone());
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    setInstallError(null);
+    if (!installPrompt) {
+      setShowInstallInstructions((visible) => !visible);
+      return;
+    }
+
+    try {
+      await installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      setInstallPrompt(null);
+      if (outcome === 'accepted') setIsInstalled(true);
+      else setShowInstallInstructions(true);
+    } catch {
+      setInstallError('The install prompt could not be opened. Use your browser menu to install this app.');
+      setShowInstallInstructions(true);
+    }
+  };
 
   const handleSaveName = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -148,6 +206,61 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         <SummaryCard icon={CheckCircle2} label="Tasks completed" value={completedTasks} tone="text-emerald-300" />
         <SummaryCard icon={Clock3} label="Open tasks" value={activeTasks} tone="text-indigo-300" />
         <SummaryCard icon={Check} label="Completion rate" value={`${completionRate}%`} tone="text-teal-300" />
+      </section>
+
+      <section className="rounded-2xl border border-indigo-300/15 bg-gradient-to-br from-indigo-400/[0.08] to-teal-300/[0.04] p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-300/10 text-indigo-200">
+              <Smartphone className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-slate-100">Use Self-Monitor as an app</h2>
+              <p className="mt-1 max-w-xl text-xs leading-5 text-slate-400">
+                Add it to your phone’s home screen for an app-like experience. It’s free and stays
+                connected to your account.
+              </p>
+            </div>
+          </div>
+          <button
+            aria-expanded={showInstallInstructions}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-500 px-4 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-default disabled:opacity-70"
+            disabled={isInstalled}
+            onClick={() => void handleInstallApp()}
+            type="button"
+          >
+            {isInstalled ? <CheckCircle2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+            {isInstalled ? 'App installed' : installPrompt ? 'Install app' : 'How to install'}
+          </button>
+        </div>
+        {showInstallInstructions && !isInstalled && (
+          <div className="mt-4 rounded-xl border border-white/[0.07] bg-black/10 p-4 text-sm text-slate-300">
+            <p className="font-medium text-slate-100">Install from your browser</p>
+            <ul className="mt-2 space-y-2 text-xs leading-5 text-slate-400">
+              <li className="flex items-start gap-2">
+                <Share className="mt-0.5 h-4 w-4 shrink-0 text-slate-300" />
+                <span>
+                  <strong className="font-medium text-slate-200">iPhone or iPad:</strong> open this
+                  page in Safari, tap Share, then choose “Add to Home Screen”.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <MoreVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-300" />
+                <span>
+                  <strong className="font-medium text-slate-200">Android:</strong> open this page in
+                  Chrome, tap the menu, then choose “Install app” or “Add to Home screen”.
+                </span>
+              </li>
+            </ul>
+            {installError && (
+              <p className="mt-3 text-xs text-rose-200" role="alert">{installError}</p>
+            )}
+            <p className="mt-3 text-[11px] leading-5 text-slate-500">
+              Installation requires the website to be served securely over HTTPS. An internet
+              connection is still needed to sign in and sync your data.
+            </p>
+          </div>
+        )}
       </section>
 
       {(message || error) && (
