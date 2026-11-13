@@ -82,6 +82,8 @@
 .app-shell {
   background: #0d0e14;
   overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-sidebar,
@@ -99,12 +101,51 @@
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+.notification-toasts {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 0.75rem);
+  right: max(0.75rem, env(safe-area-inset-right));
+  z-index: 50;
+  display: grid;
+  width: min(24rem, calc(100vw - 1.5rem));
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.notification-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  background: rgba(23, 24, 33, 0.97);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+  pointer-events: auto;
+  animation: notification-toast-enter 180ms ease-out;
+}
+
+@keyframes notification-toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 639px) {
   .app-header {
     min-height: 64px;
     gap: 0.5rem;
-    padding-right: 0.75rem;
-    padding-left: 0.75rem;
+    padding: env(safe-area-inset-top) 0.5rem 0 0.75rem;
+  }
+
+  .header-pomodoro-time {
+    display: none;
   }
 
   .notification-center {
@@ -122,7 +163,7 @@
     left: 0;
     z-index: 30;
     display: flex;
-    min-height: 4rem;
+    min-height: calc(4.5rem + env(safe-area-inset-bottom));
     align-items: center;
     gap: 0.25rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -133,6 +174,23 @@
 
   .app-shell main {
     padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 359px) {
+  .app-header {
+    gap: 0.25rem;
+    padding-left: 0.5rem;
+  }
+
+  .app-header > div:last-child {
+    gap: 0.25rem;
+  }
+
+  .app-header .header-focus-controls {
+    gap: 0.125rem;
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
   }
 }
 
