@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell, BellRing, CheckCheck, Clock3, X } from 'lucide-react';
+import { Bell, CheckCheck, Clock3, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { Task } from '../../types';
 
@@ -197,58 +197,58 @@ export const TaskNotificationCenter: React.FC<TaskNotificationCenterProps> = ({ 
             aria-label="Task notifications"
             className="notification-panel absolute right-0 top-12 z-40 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#171821] shadow-2xl shadow-black/40"
           >
-          <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-100">Notifications</h3>
-              <p className="mt-0.5 text-[11px] text-slate-500">Task progress and deadlines</p>
+            <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">Notifications</h3>
+                <p className="mt-0.5 text-[11px] text-slate-500">Task progress and deadlines</p>
+              </div>
+              <button
+                aria-label="Close notifications"
+                className="rounded-lg p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-slate-200"
+                onClick={() => setIsOpen(false)}
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              aria-label="Close notifications"
-              className="rounded-lg p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-slate-200"
-              onClick={() => setIsOpen(false)}
-              type="button"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
 
-          <div className="max-h-72 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <p className="px-4 py-6 text-center text-xs text-slate-500">
-                You’re all caught up. Deadline and progress alerts will appear here.
+            <div className="max-h-72 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <p className="px-4 py-6 text-center text-xs text-slate-500">
+                  You’re all caught up. Deadline and progress alerts will appear here.
+                </p>
+              ) : (
+                <ul className="divide-y divide-white/[0.06]">
+                  {notifications.map((notification) => (
+                    <li className="flex gap-3 px-4 py-3" key={notification.id}>
+                      <span className="mt-0.5 text-indigo-300">
+                        {notification.title === 'Task deadline'
+                          ? <Clock3 className="h-4 w-4" />
+                          : <CheckCheck className="h-4 w-4" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-slate-200">{notification.title}</p>
+                        <p className="mt-1 break-words text-xs leading-5 text-slate-400">
+                          {notification.message}
+                        </p>
+                        <time className="mt-1 block text-[10px] text-slate-600">
+                          {new Intl.DateTimeFormat(undefined, {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          }).format(notification.createdAt)}
+                        </time>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="border-t border-white/[0.07] px-4 py-3">
+              <p className="text-[10px] leading-4 text-slate-600">
+                In-app alerts appear while the app is open. They won’t arrive after you close it.
               </p>
-            ) : (
-              <ul className="divide-y divide-white/[0.06]">
-                {notifications.map((notification) => (
-                  <li className="flex gap-3 px-4 py-3" key={notification.id}>
-                    <span className="mt-0.5 text-indigo-300">
-                      {notification.title === 'Task deadline'
-                        ? <Clock3 className="h-4 w-4" />
-                        : <CheckCheck className="h-4 w-4" />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-slate-200">{notification.title}</p>
-                      <p className="mt-1 break-words text-xs leading-5 text-slate-400">
-                        {notification.message}
-                      </p>
-                      <time className="mt-1 block text-[10px] text-slate-600">
-                        {new Intl.DateTimeFormat(undefined, {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        }).format(notification.createdAt)}
-                      </time>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="border-t border-white/[0.07] px-4 py-3">
-            <p className="mt-2 text-[10px] leading-4 text-slate-600">
-              In-app alerts appear while the app is open. They won’t arrive after you close it.
-            </p>
-          </div>
+            </div>
           </section>
         )}
       </div>
